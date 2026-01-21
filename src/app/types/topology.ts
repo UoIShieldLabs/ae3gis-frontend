@@ -46,3 +46,44 @@ export type Project = {
   project_name: string;
   name: string;
 };
+
+// Script stored in backend
+export type Script = {
+  id: string;
+  name: string;
+  description?: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// Script list item (without content)
+export type ScriptListItem = {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// Script assignment for a device type (maps device types to scripts)
+export type ScriptAssignment = {
+  deviceType: string; // e.g., "DHCP_Server", "Workstation"
+  scriptId: string;
+  remotePath: string;
+  priority: number;
+};
+
+// Default script attached to a node for build
+export type DefaultScript = {
+  script_id: string;
+  remote_path: string;
+  priority: number;
+  shell?: string;
+  timeout?: number;
+};
+
+// Extended Node with default_scripts
+export type NodeWithScripts = Node & {
+  default_scripts?: DefaultScript[];
+};
