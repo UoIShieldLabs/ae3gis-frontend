@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useTopologies } from "./useTopology";
 import { useBuildScenario } from "./useBuild";
 import { generateTopologyJSON, downloadJSON } from "../utils/topologyGenerator";
+import { ScriptAssignment } from "../types/topology";
 
-export const useTopologyOperations = (config: {
+interface TopologyOperationsConfig {
   currentGns3Ip: string;
   itDevices: any[];
   otDevices: any[];
@@ -14,12 +16,22 @@ export const useTopologyOperations = (config: {
   updateDeviceCount: (name: string, count: number, isIT: boolean) => void;
   updateDeviceTemplate: (name: string, templateId: string, isIT: boolean) => void;
   setFirewallConfig: (value: any) => void;
+  scriptAssignments: ScriptAssignment[];
+}
+
+interface BuildOptions {
   startScenario: boolean;
-  createdServers: string[]
-}) => {
+  runDefaultScripts: boolean;
+  autoAssignDhcp: boolean;
+}
+
+export const useTopologyOperations = (config: TopologyOperationsConfig) => {
   // Call hooks INSIDE the custom hook
   const { createTopology, fetchTopologyById } = useTopologies();
   const { buildScenario } = useBuildScenario();
+
+  const [buildStatus, setBuildStatus] = useState<"idle" | "success" | "error">("idle");
+  const [buildMessage, setBuildMessage] = useState("");
 
   const saveActiveScenario = (scenarioData: any, scenarioName: string) => {
     const activeScenario = {
@@ -31,16 +43,22 @@ export const useTopologyOperations = (config: {
     localStorage.setItem("activeScenario", JSON.stringify(activeScenario));
   };
 
-
-  const handleSaveJSON = async (name: string, description: string) => {
-    const scenario = generateTopologyJSON(
+  // Generate topology with script assignments
+  const generateScenario = () => {
+    return generateTopologyJSON(
       config.currentGns3Ip,
       config.itDevices,
       config.otDevices,
       config.firewallConfig,
       config.templates,
-      config.selectedProject
+      config.selectedProject,
+      config.scriptAssignments
     );
+  };
+
+
+  const handleSaveJSON = async (name: string, description: string) => {
+    const scenario = generateScenario();
 
     try {
       const response = await createTopology(name, scenario, description);
@@ -152,93 +170,102 @@ export const useTopologyOperations = (config: {
   };
 
   const handleDownloadJSON = () => {
-    const scenario = generateTopologyJSON(
-      config.currentGns3Ip,
-      config.itDevices,
-      config.otDevices,
-      config.firewallConfig,
-      config.templates,
-      config.selectedProject
-    );
+    const scenario = generateScenario();
     downloadJSON(scenario);
   };
 
-  const handleBuildJSON = async () => {          
-    // If there are created servers, build on all of them
-    if (config.createdServers.length > 0) {
-      const buildPromises = config.createdServers.map(async (serverIp) => {
-        try {
-          // Generate topology JSON with the specific server IP
-          const scenario = generateTopologyJSON(
-            serverIp, // Use each server IP
-            config.itDevices,
-            config.otDevices,
-            config.firewallConfig,
-            config.templates,
-            config.selectedProject
-          );
+  // Assign DHCP IPs after build
+  const assignDhcpIps = async (scenario: any) => {
+    try {
+      // Find DHCP server nodes
+      const dhcpServers = scenario.nodes
+        .filter((n: any) => n.name.toLowerCase().includes("dhcp") && n.name.toLowerCase().includes("server"))
+        .map((n: any) => n.name);
 
-          const response = await buildScenario(
-            scenario,
-            serverIp, // Use the same server IP
-            config.startScenario
-          );
-          
-          if (response) {
-            const scenarioName = `Built Scenario - ${serverIp} - ${new Date().toLocaleString()}`;
-            saveActiveScenario(scenario, scenarioName);
-            console.log(`Successfully built scenario on ${serverIp}`);
-            return { ip: serverIp, success: true };
-          } else {
-            console.error(`Failed to build scenario on ${serverIp}`);
-            return { ip: serverIp, success: false };
-          }
-        } catch (error) {
-          console.error(`Failed to build scenario on ${serverIp}:`, error);
-          return { 
-            ip: serverIp, 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Build failed' 
-          };
-        }
+      // Find client nodes (workstations and other non-server, non-switch, non-firewall nodes)
+      const clients = scenario.nodes
+        .filter((n: any) => {
+          const name = n.name.toLowerCase();
+          return !name.includes("switch") && 
+                 !name.includes("firewall") && 
+                 !name.includes("server") &&
+                 !name.includes("router");
+        })
+        .map((n: any) => n.name);
+
+      if (dhcpServers.length === 0 || clients.length === 0) {
+        console.log("No DHCP servers or clients found, skipping DHCP assignment");
+        return;
+      }
+
+      const response = await fetch("/api/gns3/dhcp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dhcp_server_nodes: dhcpServers,
+          client_nodes: clients,
+          gns3_server_ip: scenario.gns3_server_ip,
+        }),
       });
 
-      const results = await Promise.all(buildPromises);
-      
-      const successCount = results.filter(r => r.success).length;
-      const failCount = results.filter(r => !r.success).length;
-      
-      alert(
-        `Scenario build complete!\n` +
-        `✓ Success: ${successCount}/${config.createdServers.length}\n` +
-        `✗ Failed: ${failCount}\n\n` +
-        `You can now deploy scripts to the nodes.`
-      );
-    } else {
-      // Original behavior: build on single currentGns3Ip
-      const scenario = generateTopologyJSON(
-        config.currentGns3Ip,
-        config.itDevices,
-        config.otDevices,
-        config.firewallConfig,
-        config.templates,
-        config.selectedProject
-      );
+      if (!response.ok) {
+        console.error("DHCP assignment failed:", await response.text());
+      }
+    } catch (err) {
+      console.error("DHCP assignment error:", err);
+    }
+  };
 
+  // Build and deploy scenario (simplified - single server only)
+  const handleBuildScenario = async (options: BuildOptions) => {
+    setBuildStatus("idle");
+    setBuildMessage("");
+
+    const scenario = generateScenario();
+
+    try {
       const response = await buildScenario(
         scenario,
         config.currentGns3Ip,
-        config.startScenario
+        options.startScenario,
+        options.runDefaultScripts
       );
 
       if (response) {
         const scenarioName = `Built Scenario - ${new Date().toLocaleString()}`;
         saveActiveScenario(scenario, scenarioName);
-        alert(
-          "Scenario built successfully! You can now deploy scripts to the nodes."
-        );
+
+        // Auto-assign DHCP if enabled
+        if (options.autoAssignDhcp && options.startScenario) {
+          setBuildMessage("Scenario built! Assigning DHCP IPs...");
+          await assignDhcpIps(scenario);
+        }
+
+        setBuildStatus("success");
+        setBuildMessage("Scenario built successfully! You can now interact with the nodes.");
+        return true;
+      } else {
+        setBuildStatus("error");
+        setBuildMessage("Failed to build scenario. Please check the console for details.");
+        return false;
       }
+    } catch (err) {
+      console.error("Build scenario error:", err);
+      setBuildStatus("error");
+      setBuildMessage(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+      return false;
     }
+  };
+
+  // Legacy function for compatibility
+  const handleBuildJSON = async () => {
+    return handleBuildScenario({
+      startScenario: true,
+      runDefaultScripts: false,
+      autoAssignDhcp: false,
+    });
   };
 
 
@@ -248,5 +275,10 @@ export const useTopologyOperations = (config: {
     handleExportTopology,
     handleDownloadJSON,
     handleBuildJSON,
+    handleBuildScenario,
+    buildStatus,
+    buildMessage,
+    setBuildStatus,
+    setBuildMessage,
   };
 };
