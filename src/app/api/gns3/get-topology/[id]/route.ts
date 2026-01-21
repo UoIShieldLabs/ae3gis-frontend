@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const AE3GIS_URL = process.env.AE3GIS_URL;
@@ -10,7 +10,7 @@ export async function GET(
       throw new Error("AE3GIS_URL environment variable is not set");
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const response = await fetch(`${AE3GIS_URL}/topologies/${id}`, {
       method: "GET",

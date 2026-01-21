@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useTopologies, TopologyListItem } from "../hooks/useTopology";
+import { useTopologies } from "../hooks/useTopology";
 import { TopologyListItem as TopologyCard } from "./ScenarioListItem";
 
 interface SavedTopologyListProps {

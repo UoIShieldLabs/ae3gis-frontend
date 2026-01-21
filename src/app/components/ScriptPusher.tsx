@@ -49,7 +49,7 @@ const ScriptDeployment: React.FC<ScriptDeploymentProps> = ({
   const [scripts, setScripts] = useState<ScriptConfig[]>([]);
   const [concurrency, setConcurrency] = useState(5);
   const [isDeploying, setIsDeploying] = useState(false);
-  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'success' | 'error' | 'warning'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
 
   // Generate nodes from devices

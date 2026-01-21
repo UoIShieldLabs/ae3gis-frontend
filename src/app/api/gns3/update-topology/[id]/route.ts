@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json();
     const { name, description, scenario } = body;
-    const { id } = params;
+    const { id } = await params;
 
     const AE3GIS_URL = process.env.AE3GIS_URL;
     if (!AE3GIS_URL) {
