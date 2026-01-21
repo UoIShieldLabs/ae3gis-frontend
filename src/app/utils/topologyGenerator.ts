@@ -1,4 +1,9 @@
-import { DeviceConfig, Node, Link, Template, Project } from "../types/topology";
+import { DeviceConfig, Node, Link, Template, Project, ScriptAssignment, DefaultScript } from "../types/topology";
+
+// Node with scripts for internal use
+interface NodeWithScripts extends Node {
+  default_scripts?: DefaultScript[];
+}
 
 // Configuration constants
 const LAYOUT_CONFIG = {
@@ -232,9 +237,10 @@ export const generateTopologyJSON = (
   otDevices: DeviceConfig[],
   firewallConfig: DeviceConfig,
   templates: Template[],
-  selectedProject: Project | null
+  selectedProject: Project | null,
+  scriptAssignments: ScriptAssignment[] = []
 ) => {
-  const nodes: Node[] = [];
+  const nodes: NodeWithScripts[] = [];
 
   // Extract GNS3 server IP
   const gns3Url = currentIP;
@@ -242,19 +248,35 @@ export const generateTopologyJSON = (
     .replace(/^https?:\/\//, "")
     .replace(/:\d+.*$/, "");
 
+  // Helper to get scripts for a device type
+  const getScriptsForDeviceType = (deviceName: string): DefaultScript[] => {
+    return scriptAssignments
+      .filter((a) => a.deviceType === deviceName)
+      .map((a) => ({
+        script_id: a.scriptId,
+        remote_path: a.remotePath,
+        priority: a.priority,
+      }));
+  };
+
   // Helper to add devices
   const addDevices = (devices: DeviceConfig[], zone: "IT" | "OT") => {
     devices.forEach((device) => {
       if (device.count > 0) {
+        const scripts = getScriptsForDeviceType(device.name);
         for (let i = 0; i < device.count; i++) {
-          nodes.push({
+          const node: NodeWithScripts = {
             node_id: `${device.name}_${i + 1}`,
             name: `${device.name}_${i + 1}`,
             template_id: device.templateId,
             x: 0,
             y: 0,
             zone: zone,
-          });
+          };
+          if (scripts.length > 0) {
+            node.default_scripts = scripts;
+          }
+          nodes.push(node);
         }
       }
     });
@@ -266,15 +288,20 @@ export const generateTopologyJSON = (
 
   // Add firewall
   if (firewallConfig.count > 0) {
+    const firewallScripts = getScriptsForDeviceType("Firewall");
     for (let i = 0; i < firewallConfig.count; i++) {
-      nodes.push({
+      const node: NodeWithScripts = {
         node_id: `Firewall_${i + 1}`,
         name: `Firewall_${i + 1}`,
         template_id: firewallConfig.templateId,
         x: 0,
         y: 0,
         zone: "DMZ",
-      });
+      };
+      if (firewallScripts.length > 0) {
+        node.default_scripts = firewallScripts;
+      }
+      nodes.push(node);
     }
   }
 

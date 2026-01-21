@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json(); // already built from frontend
-    const { base_url, start_nodes, scenario } = body;
+    const { base_url, start_nodes, run_default_scripts, scenario } = body;
 
     const AE3GIS_URL = process.env.AE3GIS_URL; // e.g. http://localhost:8000
     if (!AE3GIS_URL) {
@@ -18,7 +18,11 @@ export async function POST(req: Request) {
     const response = await fetch(`${AE3GIS_URL}/scenario/build`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ start_nodes, scenario }),
+      body: JSON.stringify({ 
+        start_nodes, 
+        run_default_scripts: run_default_scripts || false,
+        scenario 
+      }),
     });
 
     if (!response.ok) {

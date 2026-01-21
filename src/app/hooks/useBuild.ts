@@ -11,7 +11,8 @@ export const useBuildScenario = () => {
   const buildScenario = async (
     scenario: Topology,
     gns3Ip: string,
-    startNodes: boolean
+    startNodes: boolean,
+    runDefaultScripts: boolean = false
   ) => {
     try {
       setLoading(true);
@@ -20,6 +21,7 @@ export const useBuildScenario = () => {
       const apiRequest = {
         base_url: `http://${gns3Ip}`,
         start_nodes: startNodes,
+        run_default_scripts: runDefaultScripts,
         scenario,
       };
 
