@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
 import type { Metadata } from "next";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "My Test App",
-  description: "A simple Next.js app with Tailwind CSS",
+  title: "GNS3 Scenario Builder",
+  description: "Create and deploy network lab scenarios",
 };
 
 export default function RootLayout({
@@ -24,11 +24,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="flex flex-col min-h-screen font-sans bg-white text-black dark:bg-black dark:text-white antialiased">
-        {/* Main content */}
-        <main className="flex-grow">{children}</main>
-        {/* {children} */}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} flex flex-col min-h-screen font-sans antialiased`}>
+        <ThemeProvider>
+          <main className="flex-grow bg-[var(--background)] text-[var(--foreground)]">
+            {children}
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );
