@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Terminal, Loader2, CheckCircle, XCircle, Plus, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Terminal, Loader2, CheckCircle, XCircle, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { PushScriptRequest } from "../types/topology";
 import { useScripts } from "../hooks/useScripts";
+import { useSettings } from "../contexts/SettingsContext";
 
 interface ScriptPushFormProps {
   gns3ServerIp?: string;
@@ -26,20 +27,29 @@ interface PushResult {
 
 export default function ScriptPushForm({ gns3ServerIp: initialIp, projectId: initialProjectId }: ScriptPushFormProps) {
   const { scripts, loading: scriptsLoading } = useScripts();
+  const { settings, isSettingsValid } = useSettings();
 
-  // Server config
-  const [gns3ServerIp, setGns3ServerIp] = useState(initialIp || "");
+  // Pre-populate from settings
+  const [gns3ServerIp, setGns3ServerIp] = useState(initialIp || settings.gns3ServerIp);
+  const [gns3ServerPort, setGns3ServerPort] = useState(settings.gns3ServerPort);
   const [projectId, setProjectId] = useState(initialProjectId || "");
 
   // Push configurations
   const [pushConfigs, setPushConfigs] = useState<PushConfig[]>([
-    { nodeName: "", scriptId: "", remotePath: "/tmp/script.sh", runAfterUpload: true },
+    { nodeName: "", scriptId: "", remotePath: settings.defaultScriptPath || "/tmp/script.sh", runAfterUpload: true },
   ]);
 
   // State
   const [pushing, setPushing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<PushResult[]>([]);
+
+  // Sync with settings if they change
+  useEffect(() => {
+    if (!gns3ServerIp && settings.gns3ServerIp) {
+      setGns3ServerIp(settings.gns3ServerIp);
+    }
+  }, [settings]);
 
   // Add a new push config
   const addPushConfig = () => {
@@ -96,6 +106,9 @@ export default function ScriptPushForm({ gns3ServerIp: initialIp, projectId: ini
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           gns3_server_ip: gns3ServerIp,
+          gns3_server_port: gns3ServerPort,
+          username: settings.gns3Username || "gns3",
+          password: settings.gns3Password || "gns3",
           project_id: projectId || undefined,
           scripts: pushRequests,
         }),
@@ -196,10 +209,18 @@ export default function ScriptPushForm({ gns3ServerIp: initialIp, projectId: ini
 
   return (
     <div className="space-y-4">
+      {/* Settings Hint */}
+      {!isSettingsValid() && (
+        <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500 rounded-lg text-amber-600 text-sm">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span>Configure GNS3 settings in Settings tab to auto-fill these fields</span>
+        </div>
+      )}
+
       {/* Server Configuration */}
       <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-4">
         <h3 className="font-semibold mb-3">GNS3 Server</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm text-[var(--muted)] mb-1">
               Server IP *
@@ -209,6 +230,17 @@ export default function ScriptPushForm({ gns3ServerIp: initialIp, projectId: ini
               value={gns3ServerIp}
               onChange={(e) => setGns3ServerIp(e.target.value)}
               placeholder="e.g., 192.168.1.50"
+              className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-[var(--muted)] mb-1">
+              Port
+            </label>
+            <input
+              type="number"
+              value={gns3ServerPort}
+              onChange={(e) => setGns3ServerPort(parseInt(e.target.value) || 80)}
               className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
           </div>

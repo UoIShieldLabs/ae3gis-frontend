@@ -1,13 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Network, Rocket, Terminal, LogOut } from "lucide-react";
+import { Network, Settings, LogOut } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 
 const tabs = [
   { name: "Scenarios", href: "/student/scenarios", icon: Network },
-  { name: "Deploy", href: "/student/deploy", icon: Rocket },
-  { name: "Script Push", href: "/student/push", icon: Terminal },
+  { name: "Settings", href: "/student/settings", icon: Settings },
 ];
 
 export default function StudentLayout({
@@ -31,7 +30,9 @@ export default function StudentLayout({
             {/* Logo/Title */}
             <div className="flex items-center gap-3">
               <Network className="w-6 h-6 text-[var(--accent)]" />
-              <span className="font-semibold text-lg">GNS3 Scenario Builder</span>
+              <span className="font-semibold text-lg">
+                AE<sup className="text-sm">3</sup>GIS
+              </span>
               <span className="text-xs bg-[var(--success)] text-white px-2 py-0.5 rounded">
                 Student
               </span>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Rocket, Loader2, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Rocket, Loader2, CheckCircle, XCircle, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { DeployScenarioRequest, DeployScenarioResponse, Scenario } from "../types/topology";
 import { useDeploy } from "../hooks/useDeploy";
+import { useSettings } from "../contexts/SettingsContext";
 
 interface DeployFormProps {
   scenario: Scenario;
@@ -12,18 +13,29 @@ interface DeployFormProps {
 
 export default function DeployForm({ scenario, onClose }: DeployFormProps) {
   const { deploy, loading, error, result, reset } = useDeploy();
+  const { settings, isSettingsValid } = useSettings();
 
-  // Deploy configuration
-  const [gns3ServerIp, setGns3ServerIp] = useState("");
-  const [gns3ServerPort, setGns3ServerPort] = useState(80);
-  const [username, setUsername] = useState("gns3");
-  const [password, setPassword] = useState("gns3");
+  // Pre-populate from settings
+  const [gns3ServerIp, setGns3ServerIp] = useState(settings.gns3ServerIp);
+  const [gns3ServerPort, setGns3ServerPort] = useState(settings.gns3ServerPort);
+  const [username, setUsername] = useState(settings.gns3Username || "gns3");
+  const [password, setPassword] = useState(settings.gns3Password || "gns3");
   const [startNodes, setStartNodes] = useState(true);
   const [runScripts, setRunScripts] = useState(true);
-  const [priorityDelay, setPriorityDelay] = useState(3.0);
+  const [priorityDelay, setPriorityDelay] = useState(settings.priorityDelay);
   const [projectNameOverride, setProjectNameOverride] = useState("");
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Sync with settings if they change
+  useEffect(() => {
+    if (!gns3ServerIp && settings.gns3ServerIp) {
+      setGns3ServerIp(settings.gns3ServerIp);
+    }
+    if (gns3ServerPort === 80 && settings.gns3ServerPort !== 80) {
+      setGns3ServerPort(settings.gns3ServerPort);
+    }
+  }, [settings]);
 
   const handleDeploy = async () => {
     if (!gns3ServerIp.trim()) {
@@ -268,6 +280,14 @@ export default function DeployForm({ scenario, onClose }: DeployFormProps) {
           </div>
         )}
       </div>
+
+      {/* Settings Hint */}
+      {!isSettingsValid() && (
+        <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500 rounded-lg text-amber-600 text-sm">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span>Configure GNS3 settings in Settings tab to auto-fill these fields</span>
+        </div>
+      )}
 
       {/* Error */}
       {error && (

@@ -12,6 +12,7 @@ import {
 } from "../types/topology";
 import NodeForm from "./NodeForm";
 import { useTemplates } from "../hooks/useTemplates";
+import { useSettings } from "../contexts/SettingsContext";
 import {
   calculateAllPositions,
   flattenNodes,
@@ -44,11 +45,14 @@ export default function ScenarioForm({
   onSave,
   onCancel,
 }: ScenarioFormProps) {
-  // Form state
+  // Get settings for default project name
+  const { settings } = useSettings();
+
+  // Form state - use settings default if no initial scenario
   const [name, setName] = useState(initialScenario?.name || "");
   const [description, setDescription] = useState(initialScenario?.description || "");
   const [projectName, setProjectName] = useState(
-    initialScenario?.definition.project_name || ""
+    initialScenario?.definition.project_name || settings.defaultProjectName || ""
   );
 
   // Nodes by layer
@@ -65,6 +69,13 @@ export default function ScenarioForm({
 
   // Load templates
   const { templates, loading: templatesLoading } = useTemplates();
+
+  // Sync project name from settings if not set and not editing
+  useEffect(() => {
+    if (!initialScenario && !projectName && settings.defaultProjectName) {
+      setProjectName(settings.defaultProjectName);
+    }
+  }, [settings.defaultProjectName, initialScenario, projectName]);
 
   // Initialize from existing scenario
   useEffect(() => {
@@ -157,7 +168,16 @@ export default function ScenarioForm({
     switches: ScenarioNode[]
   ): ScenarioLink[] => {
     const links: ScenarioLink[] = [];
-    let portCounter = 0;
+    // Track adapter usage per switch (Open vSwitch uses adapters, not ports)
+    // Each adapter on Open vSwitch has only port 0
+    const switchAdapterCounters: Record<string, number> = {};
+
+    const getNextAdapter = (switchName: string) => {
+      if (!switchAdapterCounters[switchName]) {
+        switchAdapterCounters[switchName] = 0;
+      }
+      return switchAdapterCounters[switchName]++;
+    };
 
     // Find IT and OT switches
     const itSwitch = switches.find((s) => s.name === "IT-Switch");
@@ -171,7 +191,7 @@ export default function ScenarioForm({
           links.push({
             nodes: [
               { name: node.name, adapter_number: 0, port_number: 0 },
-              { name: itSwitch.name, adapter_number: 0, port_number: portCounter++ },
+              { name: itSwitch.name, adapter_number: getNextAdapter(itSwitch.name), port_number: 0 },
             ],
           });
         });
@@ -185,7 +205,7 @@ export default function ScenarioForm({
           links.push({
             nodes: [
               { name: node.name, adapter_number: 0, port_number: 0 },
-              { name: otSwitch.name, adapter_number: 0, port_number: portCounter++ },
+              { name: otSwitch.name, adapter_number: getNextAdapter(otSwitch.name), port_number: 0 },
             ],
           });
         });
@@ -195,8 +215,8 @@ export default function ScenarioForm({
     if (itSwitch && otSwitch) {
       links.push({
         nodes: [
-          { name: itSwitch.name, adapter_number: 0, port_number: portCounter++ },
-          { name: otSwitch.name, adapter_number: 0, port_number: portCounter++ },
+          { name: itSwitch.name, adapter_number: getNextAdapter(itSwitch.name), port_number: 0 },
+          { name: otSwitch.name, adapter_number: getNextAdapter(otSwitch.name), port_number: 0 },
         ],
       });
     }

@@ -1,14 +1,13 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Network, FileCode2, Rocket, Terminal, LogOut } from "lucide-react";
+import { Network, FileCode2, Settings, LogOut } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 
 const tabs = [
   { name: "Scenarios", href: "/instructor/scenarios", icon: Network },
   { name: "Scripts", href: "/instructor/scripts", icon: FileCode2 },
-  { name: "Deploy", href: "/instructor/deploy", icon: Rocket },
-  { name: "Script Push", href: "/instructor/push", icon: Terminal },
+  { name: "Settings", href: "/instructor/settings", icon: Settings },
 ];
 
 export default function InstructorLayout({
@@ -32,7 +31,9 @@ export default function InstructorLayout({
             {/* Logo/Title */}
             <div className="flex items-center gap-3">
               <Network className="w-6 h-6 text-[var(--accent)]" />
-              <span className="font-semibold text-lg">GNS3 Scenario Builder</span>
+              <span className="font-semibold text-lg">
+                AE<sup className="text-sm">3</sup>GIS
+              </span>
               <span className="text-xs bg-[var(--accent)] text-white px-2 py-0.5 rounded">
                 Instructor
               </span>
