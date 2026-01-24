@@ -1,20 +1,19 @@
 "use client";
 
-import ScriptPushForm from "../../components/ScriptPushForm";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function StudentPushPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Push Scripts</h1>
-        <p className="text-[var(--muted)]">
-          Push scripts to running nodes in your deployed scenarios
-        </p>
-      </div>
+  const router = useRouter();
 
-      <div className="max-w-3xl">
-        <ScriptPushForm />
-      </div>
+  useEffect(() => {
+    // Students cannot push scripts, redirect to scenarios
+    router.replace("/student/scenarios");
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
     </div>
   );
 }

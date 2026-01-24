@@ -1,20 +1,19 @@
 "use client";
 
-import ScriptPushForm from "../../components/ScriptPushForm";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function InstructorPushPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Push Scripts</h1>
-        <p className="text-[var(--muted)]">
-          Push scripts from the library to running GNS3 nodes
-        </p>
-      </div>
+  const router = useRouter();
 
-      <div className="max-w-3xl">
-        <ScriptPushForm />
-      </div>
+  useEffect(() => {
+    // Redirect to the unified scripts page
+    router.replace("/instructor/scripts");
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
     </div>
   );
 }
