@@ -77,6 +77,15 @@ export default function ScenarioDetailView({
     }
   };
 
+  // Infer layer from Y position if not explicitly set
+  // IT: negative Y (top), OT: positive Y (bottom), DMZ: around 0
+  const inferLayerFromY = (y: number): string | undefined => {
+    if (y < -100) return "IT";
+    if (y > 100) return "OT";
+    if (y >= -100 && y <= 100) return "DMZ";
+    return undefined;
+  };
+
   return (
     <div className="space-y-6">
       {/* Project Configuration */}
@@ -157,7 +166,7 @@ export default function ScenarioDetailView({
             <tbody>
               {definition.nodes.map((node, idx) => (
                 <>
-                  <tr key={idx} className="border-b border-[var(--border)]">
+                  <tr key={`node-${idx}`} className="border-b border-[var(--border)]">
                     <td className="px-4 py-2">
                       {node.scripts.length > 0 && (
                         <button
@@ -182,8 +191,8 @@ export default function ScenarioDetailView({
                       />
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLayerColor(node.layer)}`}>
-                        {node.layer || "N/A"}
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLayerColor(node.layer || inferLayerFromY(node.y))}`}>
+                        {node.layer || inferLayerFromY(node.y) || "N/A"}
                       </span>
                     </td>
                     <td className="px-4 py-2 font-mono text-xs text-[var(--muted)]">
@@ -221,7 +230,7 @@ export default function ScenarioDetailView({
                   </tr>
                   {/* Expanded scripts */}
                   {expandedNodes.has(idx) && node.scripts.length > 0 && (
-                    <tr key={`${idx}-scripts`} className="border-b border-[var(--border)] bg-[var(--input-bg)]/50">
+                    <tr key={`node-${idx}-scripts`} className="border-b border-[var(--border)] bg-[var(--input-bg)]/50">
                       <td colSpan={6} className="px-8 py-3">
                         <div className="space-y-2">
                           <h4 className="text-xs font-medium text-[var(--muted)]">Scripts for {node.name}</h4>
