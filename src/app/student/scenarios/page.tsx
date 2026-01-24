@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useScenarios } from "../../hooks/useScenarios";
 import { Scenario } from "../../types/topology";
 import ScenarioList from "../../components/ScenarioList";
-import { ArrowLeft, Network, FileCode2 } from "lucide-react";
+import DeployForm from "../../components/DeployForm";
+import { ArrowLeft, Network, FileCode2, Rocket, Calendar } from "lucide-react";
 
 export default function StudentScenariosPage() {
   const { scenarios, loading, fetchScenario } = useScenarios();
@@ -21,7 +22,16 @@ export default function StudentScenariosPage() {
     setViewingScenario(null);
   };
 
-  // Detail view
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  // Detail view with deploy
   if (viewingScenario) {
     const def = viewingScenario.definition;
 
@@ -34,54 +44,50 @@ export default function StudentScenariosPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div>
-            <h1 className="text-2xl font-bold">{viewingScenario.name}</h1>
+          <div className="flex-grow">
+            <div className="flex items-center gap-2">
+              <Network className="w-6 h-6 text-[var(--accent)]" />
+              <h1 className="text-2xl font-bold">{viewingScenario.name}</h1>
+            </div>
             {viewingScenario.description && (
-              <p className="text-[var(--muted)]">{viewingScenario.description}</p>
+              <p className="text-[var(--muted)] mt-1">{viewingScenario.description}</p>
             )}
           </div>
         </div>
 
-        {/* Scenario Details */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Overview */}
-          <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Overview</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Project Name:</span>
-                <span>{def.project_name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Total Nodes:</span>
-                <span>{def.nodes.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Total Links:</span>
-                <span>{def.links.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Templates Used:</span>
-                <span>{Object.keys(def.templates).length}</span>
-              </div>
+        {/* Scenario Info */}
+        <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-[var(--muted)]">Project Name:</span>
+              <span className="ml-2 font-medium">{def.project_name}</span>
             </div>
-          </div>
-
-          {/* Templates */}
-          <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Templates</h3>
-            <div className="space-y-1 text-sm">
-              {Object.keys(def.templates).map((key) => (
-                <div key={key} className="flex items-center gap-2">
-                  <Network className="w-3 h-3 text-[var(--accent)]" />
-                  <span>{key}</span>
-                </div>
-              ))}
+            <div>
+              <span className="text-[var(--muted)]">Total Nodes:</span>
+              <span className="ml-2 font-medium">{def.nodes.length}</span>
+            </div>
+            <div>
+              <span className="text-[var(--muted)]">Total Links:</span>
+              <span className="ml-2 font-medium">{def.links.length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-[var(--muted)]" />
+              <span className="text-[var(--muted)]">Created:</span>
+              <span className="ml-1">{formatDate(viewingScenario.created_at)}</span>
             </div>
           </div>
         </div>
 
-        {/* Nodes */}
+        {/* Deploy Section */}
+        <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Rocket className="w-5 h-5 text-[var(--success)]" />
+            <h2 className="text-lg font-semibold">Deploy Scenario</h2>
+          </div>
+          <DeployForm scenario={viewingScenario} />
+        </div>
+
+        {/* Nodes Overview */}
         <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-4">
           <h3 className="font-semibold mb-3">Nodes ({def.nodes.length})</h3>
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -100,7 +106,7 @@ export default function StudentScenariosPage() {
                   )}
                 </div>
                 <p className="text-xs text-[var(--muted)] mt-1">
-                  Template: {node.template_key || node.template_name || "N/A"}
+                  {node.layer} • {node.template_key || node.template_name || "N/A"}
                 </p>
               </div>
             ))}
@@ -116,7 +122,7 @@ export default function StudentScenariosPage() {
       <div>
         <h1 className="text-2xl font-bold">Available Scenarios</h1>
         <p className="text-[var(--muted)]">
-          Browse scenarios created by instructors
+          Browse and deploy scenarios created by instructors
         </p>
       </div>
 
