@@ -86,17 +86,25 @@ export default function ScenarioForm({
       setProjectName(def.project_name);
 
       // Categorize nodes by layer or position
+      // Filter out auto-generated switches (they'll be regenerated on save)
       const it: ScenarioNode[] = [];
       const dmz: ScenarioNode[] = [];
       const ot: ScenarioNode[] = [];
 
       def.nodes.forEach((node) => {
-        if (node.layer === "IT" || node.y > 100) {
-          it.push(node);
-        } else if (node.layer === "OT" || node.y < -100) {
-          ot.push(node);
+        // Skip auto-generated switches
+        if (node.name === "IT-Switch" || node.name === "OT-Switch") {
+          return;
+        }
+        
+        // Use layer if set, otherwise infer from Y position
+        // Note: IT has negative Y (top), OT has positive Y (bottom)
+        if (node.layer === "IT" || (!node.layer && (node.y ?? 0) < -100)) {
+          it.push({ ...node, layer: "IT" });
+        } else if (node.layer === "OT" || (!node.layer && (node.y ?? 0) > 100)) {
+          ot.push({ ...node, layer: "OT" });
         } else {
-          dmz.push(node);
+          dmz.push({ ...node, layer: "DMZ" });
         }
       });
 
@@ -162,7 +170,7 @@ export default function ScenarioForm({
     return map;
   };
 
-  // Generate links (connect layer nodes to switches, switches to firewalls)
+  // Generate links (connect nodes properly: children to parents, top-level to switches)
   const generateLinks = (
     allNodes: ScenarioNode[],
     switches: ScenarioNode[],
@@ -188,39 +196,51 @@ export default function ScenarioForm({
       !n.name.includes("Switch") && n.layer === "DMZ"
     );
 
-    // Connect IT nodes to IT-Switch
-    if (itSwitch) {
-      allNodes
-        .filter((n) => n.layer === "IT")
-        .forEach((node) => {
-          links.push({
-            nodes: [
-              { name: node.name, adapter_number: 0, port_number: 0 },
-              { name: itSwitch.name, adapter_number: getNextAdapter(itSwitch.name), port_number: 0 },
-            ],
-          });
+    // Separate nodes into: those with parents (children) and top-level nodes
+    const childNodes = allNodes.filter((n) => n.parent_name);
+    const topLevelIT = allNodes.filter((n) => n.layer === "IT" && !n.parent_name);
+    const topLevelOT = allNodes.filter((n) => n.layer === "OT" && !n.parent_name);
+
+    // Connect child nodes to their parent nodes
+    childNodes.forEach((child) => {
+      const parent = allNodes.find((n) => n.name === child.parent_name);
+      if (parent) {
+        links.push({
+          nodes: [
+            { name: child.name, adapter_number: 0, port_number: 0 },
+            { name: parent.name, adapter_number: getNextAdapter(parent.name), port_number: 0 },
+          ],
         });
+      }
+    });
+
+    // Connect top-level IT nodes to IT-Switch
+    if (itSwitch) {
+      topLevelIT.forEach((node) => {
+        links.push({
+          nodes: [
+            { name: node.name, adapter_number: getNextAdapter(node.name), port_number: 0 },
+            { name: itSwitch.name, adapter_number: getNextAdapter(itSwitch.name), port_number: 0 },
+          ],
+        });
+      });
     }
 
-    // Connect OT nodes to OT-Switch
+    // Connect top-level OT nodes to OT-Switch
     if (otSwitch) {
-      allNodes
-        .filter((n) => n.layer === "OT")
-        .forEach((node) => {
-          links.push({
-            nodes: [
-              { name: node.name, adapter_number: 0, port_number: 0 },
-              { name: otSwitch.name, adapter_number: getNextAdapter(otSwitch.name), port_number: 0 },
-            ],
-          });
+      topLevelOT.forEach((node) => {
+        links.push({
+          nodes: [
+            { name: node.name, adapter_number: getNextAdapter(node.name), port_number: 0 },
+            { name: otSwitch.name, adapter_number: getNextAdapter(otSwitch.name), port_number: 0 },
+          ],
         });
+      });
     }
 
     // Connect switches to firewalls (IT-Switch -> Firewall(s) -> OT-Switch)
     if (firewalls.length > 0) {
-      // Connect each firewall to both switches
       firewalls.forEach((firewall) => {
-        // IT-Switch to Firewall
         if (itSwitch) {
           links.push({
             nodes: [
@@ -229,7 +249,6 @@ export default function ScenarioForm({
             ],
           });
         }
-        // Firewall to OT-Switch
         if (otSwitch) {
           links.push({
             nodes: [
