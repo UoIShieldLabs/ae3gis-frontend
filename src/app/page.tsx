@@ -26,10 +26,13 @@ export default function LoginPage() {
         {/* Logo/Title - Styled for login page */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-[var(--accent)] to-purple-500 bg-clip-text text-transparent">
-            AE<sup className="text-3xl">3</sup>GIS
+            AE³GIS
           </h1>
-          <p className="text-lg text-[var(--muted)]">
+          <p className="text-lg text-[var(--muted)] mb-2">
             Network Scenario Builder
+          </p>
+          <p className="text-xs text-[var(--muted)]">
+            Agile Emulated Educational Environment for Guided Industrial Security Training
           </p>
         </div>
 
