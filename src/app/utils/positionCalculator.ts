@@ -170,6 +170,31 @@ export function calculateAllPositions(
 }
 
 /**
+ * Expand nodes with quantity > 1 into individual nodes with numbered suffixes
+ * e.g., { name: "Ubuntu", quantity: 3 } becomes Ubuntu-1, Ubuntu-2, Ubuntu-3
+ */
+export function expandNodesByQuantity(nodes: ScenarioNode[]): ScenarioNode[] {
+  const expanded: ScenarioNode[] = [];
+
+  for (const node of nodes) {
+    const qty = node.quantity && node.quantity > 1 ? node.quantity : 1;
+
+    for (let i = 1; i <= qty; i++) {
+      const name = qty > 1 ? `${node.name}-${i}` : node.name;
+      const expandedNode: ScenarioNode = {
+        ...node,
+        name,
+        quantity: undefined, // Remove quantity from expanded node
+        children: node.children ? expandNodesByQuantity(node.children) : undefined,
+      };
+      expanded.push(expandedNode);
+    }
+  }
+
+  return expanded;
+}
+
+/**
  * Flatten all nodes from a hierarchical structure into a flat array
  * Sets parent_name on children for link generation and API storage
  */
