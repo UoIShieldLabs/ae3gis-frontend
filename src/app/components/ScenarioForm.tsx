@@ -162,26 +162,31 @@ export default function ScenarioForm({
     return map;
   };
 
-  // Generate links (connect layer nodes to switches)
+  // Generate links (connect layer nodes to switches, switches to firewalls)
   const generateLinks = (
     allNodes: ScenarioNode[],
-    switches: ScenarioNode[]
+    switches: ScenarioNode[],
+    dmzNodes: ScenarioNode[]
   ): ScenarioLink[] => {
     const links: ScenarioLink[] = [];
-    // Track adapter usage per switch (Open vSwitch uses adapters, not ports)
-    // Each adapter on Open vSwitch has only port 0
-    const switchAdapterCounters: Record<string, number> = {};
+    // Track adapter usage per node (Open vSwitch uses adapters, not ports)
+    const adapterCounters: Record<string, number> = {};
 
-    const getNextAdapter = (switchName: string) => {
-      if (!switchAdapterCounters[switchName]) {
-        switchAdapterCounters[switchName] = 0;
+    const getNextAdapter = (nodeName: string) => {
+      if (!adapterCounters[nodeName]) {
+        adapterCounters[nodeName] = 0;
       }
-      return switchAdapterCounters[switchName]++;
+      return adapterCounters[nodeName]++;
     };
 
     // Find IT and OT switches
     const itSwitch = switches.find((s) => s.name === "IT-Switch");
     const otSwitch = switches.find((s) => s.name === "OT-Switch");
+    
+    // Find firewalls (DMZ nodes that aren't switches)
+    const firewalls = dmzNodes.filter((n) => 
+      !n.name.includes("Switch") && n.layer === "DMZ"
+    );
 
     // Connect IT nodes to IT-Switch
     if (itSwitch) {
@@ -211,14 +216,39 @@ export default function ScenarioForm({
         });
     }
 
-    // Connect switches together if both exist
-    if (itSwitch && otSwitch) {
-      links.push({
-        nodes: [
-          { name: itSwitch.name, adapter_number: getNextAdapter(itSwitch.name), port_number: 0 },
-          { name: otSwitch.name, adapter_number: getNextAdapter(otSwitch.name), port_number: 0 },
-        ],
+    // Connect switches to firewalls (IT-Switch -> Firewall(s) -> OT-Switch)
+    if (firewalls.length > 0) {
+      // Connect each firewall to both switches
+      firewalls.forEach((firewall) => {
+        // IT-Switch to Firewall
+        if (itSwitch) {
+          links.push({
+            nodes: [
+              { name: itSwitch.name, adapter_number: getNextAdapter(itSwitch.name), port_number: 0 },
+              { name: firewall.name, adapter_number: getNextAdapter(firewall.name), port_number: 0 },
+            ],
+          });
+        }
+        // Firewall to OT-Switch
+        if (otSwitch) {
+          links.push({
+            nodes: [
+              { name: firewall.name, adapter_number: getNextAdapter(firewall.name), port_number: 0 },
+              { name: otSwitch.name, adapter_number: getNextAdapter(otSwitch.name), port_number: 0 },
+            ],
+          });
+        }
       });
+    } else {
+      // No firewall - connect switches directly
+      if (itSwitch && otSwitch) {
+        links.push({
+          nodes: [
+            { name: itSwitch.name, adapter_number: getNextAdapter(itSwitch.name), port_number: 0 },
+            { name: otSwitch.name, adapter_number: getNextAdapter(otSwitch.name), port_number: 0 },
+          ],
+        });
+      }
     }
 
     return links;
@@ -278,8 +308,8 @@ export default function ScenarioForm({
         }
       }
 
-      // Generate links
-      const links = generateLinks(allNodes, switches);
+      // Generate links (pass DMZ nodes for firewall connections)
+      const links = generateLinks(allNodes, switches, positioned.dmzNodes);
 
       // Build definition
       const definition: ScenarioDefinition = {

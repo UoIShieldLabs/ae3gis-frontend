@@ -5,20 +5,22 @@ interface NodeWithScripts extends Node {
   default_scripts?: DefaultScript[];
 }
 
-// Configuration constants
+// Configuration constants - aligned with positionCalculator.ts
+// GNS3 uses screen coordinates: positive Y = down, negative Y = up
 const LAYOUT_CONFIG = {
-  IT_SWITCH_Y: 100,
-  OT_SWITCH_Y: -150,
+  // Switch positions (IT at top = negative Y, OT at bottom = positive Y)
+  IT_SWITCH_Y: -150,       // Between IT layer and center
+  OT_SWITCH_Y: 150,        // Between center and OT layer
   SWITCH_SPACING: 400,
   DEVICE_SPACING_X: 120,
   DEVICE_SPACING_Y: 70,
-  IT_DEVICE_OFFSET_Y: 60,
-  OT_DEVICE_OFFSET_Y: -60,
+  IT_DEVICE_OFFSET_Y: -100,  // IT devices go UP (more negative)
+  OT_DEVICE_OFFSET_Y: 100,   // OT devices go DOWN (more positive)
   IT_GRID_COLUMNS: 2,
   OT_GRID_ROWS: 2,
   BOUNDS: {
-    IT: { X_MIN: -1000, X_MAX: 945, Y_MIN: 50, Y_MAX: 470 },
-    OT: { X_MIN: -1000, X_MAX: 945, Y_MIN: -505, Y_MAX: -50 },
+    IT: { X_MIN: -1000, X_MAX: 945, Y_MIN: -600, Y_MAX: -100 },  // Negative Y range for IT
+    OT: { X_MIN: -1000, X_MAX: 945, Y_MIN: 100, Y_MAX: 600 },    // Positive Y range for OT
   },
 } as const;
 
@@ -48,17 +50,17 @@ const positionDevicesInGrid = (
   const devicesPerSwitch = Math.ceil(devices.length / switches.length);
   const { DEVICE_SPACING_X, DEVICE_SPACING_Y, SWITCH_SPACING } = LAYOUT_CONFIG;
 
+  // IT devices go UP (negative Y direction), OT devices go DOWN (positive Y direction)
   const gridConfig = isITZone
     ? {
         columns: LAYOUT_CONFIG.IT_GRID_COLUMNS,
         baseY: LAYOUT_CONFIG.IT_SWITCH_Y + LAYOUT_CONFIG.IT_DEVICE_OFFSET_Y,
+        yDirection: -1,  // Additional rows go up (more negative)
       }
     : {
         columns: Math.ceil(devicesPerSwitch / LAYOUT_CONFIG.OT_GRID_ROWS),
-        baseY:
-          LAYOUT_CONFIG.OT_SWITCH_Y +
-          LAYOUT_CONFIG.OT_DEVICE_OFFSET_Y -
-          DEVICE_SPACING_Y,
+        baseY: LAYOUT_CONFIG.OT_SWITCH_Y + LAYOUT_CONFIG.OT_DEVICE_OFFSET_Y,
+        yDirection: 1,   // Additional rows go down (more positive)
       };
 
   devices.forEach((device, index) => {
@@ -86,7 +88,7 @@ const positionDevicesInGrid = (
       : (col - (gridConfig.columns - 1) / 2) * DEVICE_SPACING_X;
 
     const x = switchX + xOffset;
-    const y = gridConfig.baseY + row * DEVICE_SPACING_Y;
+    const y = gridConfig.baseY + (row * DEVICE_SPACING_Y * gridConfig.yDirection);
 
     // Apply bounds
     const bounds = isITZone ? LAYOUT_CONFIG.BOUNDS.IT : LAYOUT_CONFIG.BOUNDS.OT;
