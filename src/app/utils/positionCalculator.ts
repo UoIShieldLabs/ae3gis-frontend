@@ -171,23 +171,27 @@ export function calculateAllPositions(
 
 /**
  * Flatten all nodes from a hierarchical structure into a flat array
- * Useful for building links and sending to the API
+ * Sets parent_name on children for link generation and API storage
  */
-export function flattenNodes(nodes: ScenarioNode[]): ScenarioNode[] {
+export function flattenNodes(nodes: ScenarioNode[], parentName?: string): ScenarioNode[] {
   const result: ScenarioNode[] = [];
 
-  function addNode(node: ScenarioNode) {
-    // Add the node without children (children are added separately)
+  function addNode(node: ScenarioNode, parent?: string) {
+    // Add the node without children, but with parent_name set
     const { children, ...nodeWithoutChildren } = node;
-    result.push(nodeWithoutChildren as ScenarioNode);
+    const flatNode: ScenarioNode = {
+      ...nodeWithoutChildren,
+      parent_name: parent,
+    } as ScenarioNode;
+    result.push(flatNode);
 
-    // Recursively add children
+    // Recursively add children with this node as parent
     if (children && children.length > 0) {
-      children.forEach(addNode);
+      children.forEach((child) => addNode(child, node.name));
     }
   }
 
-  nodes.forEach(addNode);
+  nodes.forEach((node) => addNode(node, parentName));
   return result;
 }
 

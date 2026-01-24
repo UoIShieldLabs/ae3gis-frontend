@@ -92,8 +92,9 @@ export type ScenarioNode = {
   x: number;
   y: number;
   layer?: LayerType;
+  parent_name?: string; // Parent node name for hierarchy (set when flattening)
   scripts: EmbeddedScript[];
-  children?: ScenarioNode[]; // Recursive child nodes
+  children?: ScenarioNode[]; // Recursive child nodes (used in form, flattened for API)
 };
 
 // Link between nodes using names
