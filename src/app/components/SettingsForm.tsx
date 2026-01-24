@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, RotateCcw, AlertTriangle, Loader2, CheckCircle, Trash2 } from "lucide-react";
 import { useSettings } from "../contexts/SettingsContext";
 
@@ -15,7 +15,14 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
   const [saved, setSaved] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [projectId, setProjectId] = useState("");
+  const [projectName, setProjectName] = useState("");
+
+  // Pre-populate project name from settings
+  useEffect(() => {
+    if (settings.defaultProjectName && !projectName) {
+      setProjectName(settings.defaultProjectName);
+    }
+  }, [settings.defaultProjectName, projectName]);
 
   const handleSave = () => {
     setSaving(true);
@@ -28,8 +35,8 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
   };
 
   const handleResetProject = async () => {
-    if (!projectId.trim()) {
-      setResetResult({ success: false, message: "Project ID is required" });
+    if (!projectName.trim()) {
+      setResetResult({ success: false, message: "Project name is required" });
       return;
     }
 
@@ -39,7 +46,7 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
     }
 
     const confirmed = window.confirm(
-      "This will delete ALL nodes and links in the project. This cannot be undone. Continue?"
+      `This will delete ALL nodes and links in the project "${projectName}". This cannot be undone. Continue?`
     );
     if (!confirmed) return;
 
@@ -47,7 +54,37 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
     setResetResult(null);
 
     try {
-      const response = await fetch(`/api/scenarios/projects/${projectId}/nodes`, {
+      // First, get the project ID from the project name
+      const projectsResponse = await fetch("/api/gns3/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gns3_server_ip: settings.gns3ServerIp,
+          gns3_server_port: settings.gns3ServerPort,
+          username: settings.gns3Username,
+          password: settings.gns3Password,
+        }),
+      });
+
+      if (!projectsResponse.ok) {
+        throw new Error("Failed to fetch projects from GNS3 server");
+      }
+
+      const projects = await projectsResponse.json();
+      const project = projects.find((p: { name: string; project_id: string }) => 
+        p.name.toLowerCase() === projectName.trim().toLowerCase()
+      );
+
+      if (!project) {
+        setResetResult({
+          success: false,
+          message: `Project "${projectName}" not found on GNS3 server`,
+        });
+        return;
+      }
+
+      // Now delete the nodes using the project ID
+      const response = await fetch(`/api/scenarios/projects/${project.project_id}/nodes`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -63,7 +100,7 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
       if (response.ok) {
         setResetResult({
           success: true,
-          message: `Deleted ${data.nodes_deleted} nodes and ${data.links_deleted} links`,
+          message: `Deleted ${data.nodes_deleted} nodes and ${data.links_deleted} links from "${projectName}"`,
         });
       } else {
         setResetResult({
@@ -74,7 +111,7 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
     } catch (error) {
       setResetResult({
         success: false,
-        message: "Failed to connect to server",
+        message: error instanceof Error ? error.message : "Failed to connect to server",
       });
     } finally {
       setResetting(false);
@@ -198,19 +235,19 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
           <div className="flex gap-3 items-end">
             <div className="flex-grow">
               <label className="block text-sm text-[var(--muted)] mb-1">
-                GNS3 Project ID
+                Project Name
               </label>
               <input
                 type="text"
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                placeholder="Enter project UUID"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Enter project name"
                 className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--danger)]"
               />
             </div>
             <button
               onClick={handleResetProject}
-              disabled={resetting || !projectId.trim()}
+              disabled={resetting || !projectName.trim()}
               className="flex items-center gap-2 px-4 py-2 bg-[var(--danger)] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {resetting ? (
