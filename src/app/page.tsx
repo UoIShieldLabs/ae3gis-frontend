@@ -23,11 +23,13 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-md">
-        {/* Logo/Title */}
+        {/* Logo/Title - Styled for login page */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">GNS3 Scenario Builder</h1>
-          <p className="text-[var(--muted)]">
-            Create and deploy network lab scenarios
+          <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-[var(--accent)] to-purple-500 bg-clip-text text-transparent">
+            AE<sup className="text-3xl">3</sup>GIS
+          </h1>
+          <p className="text-lg text-[var(--muted)]">
+            Network Scenario Builder
           </p>
         </div>
 
@@ -68,9 +70,8 @@ export default function LoginPage() {
                 <h3 className="font-medium mb-2">Instructor Access</h3>
                 <ul className="text-sm text-[var(--muted)] space-y-1">
                   <li>• Create and manage scenarios</li>
-                  <li>• Manage script library</li>
+                  <li>• Manage script library &amp; push scripts</li>
                   <li>• Deploy and test scenarios</li>
-                  <li>• Push scripts to running nodes</li>
                 </ul>
               </div>
             ) : (
@@ -79,7 +80,6 @@ export default function LoginPage() {
                 <ul className="text-sm text-[var(--muted)] space-y-1">
                   <li>• Browse available scenarios</li>
                   <li>• Deploy scenarios to your GNS3 server</li>
-                  <li>• Push scripts to running nodes</li>
                 </ul>
               </div>
             )}
