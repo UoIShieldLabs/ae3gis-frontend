@@ -17,6 +17,7 @@ import {
   calculateAllPositions,
   flattenNodes,
   generateSwitchNodes,
+  expandNodesByQuantity,
 } from "../utils/positionCalculator";
 
 interface ScenarioFormProps {
@@ -296,8 +297,13 @@ export default function ScenarioForm({
     setSaving(true);
 
     try {
+      // Expand nodes with quantity > 1 into individual nodes
+      const expandedIT = expandNodesByQuantity(itNodes);
+      const expandedDMZ = expandNodesByQuantity(dmzNodes);
+      const expandedOT = expandNodesByQuantity(otNodes);
+
       // Calculate positions
-      const positioned = calculateAllPositions(itNodes, dmzNodes, otNodes);
+      const positioned = calculateAllPositions(expandedIT, expandedDMZ, expandedOT);
 
       // Generate switch nodes for DMZ
       const switches = generateSwitchNodes(

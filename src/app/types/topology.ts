@@ -92,6 +92,7 @@ export type ScenarioNode = {
   x: number;
   y: number;
   layer?: LayerType;
+  quantity?: number; // Number of instances to create (expands to name-1, name-2, etc.)
   parent_name?: string; // Parent node name for hierarchy (set when flattening)
   scripts: EmbeddedScript[];
   children?: ScenarioNode[]; // Recursive child nodes (used in form, flattened for API)

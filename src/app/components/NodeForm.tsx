@@ -141,8 +141,8 @@ export default function NodeForm({
         {/* Node Content */}
         {expanded && (
           <div className="p-4 space-y-4">
-            {/* Name and Template */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Name, Quantity, and Template */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm text-[var(--muted)] mb-1">
                   Node Name
@@ -152,6 +152,19 @@ export default function NodeForm({
                   value={node.name}
                   onChange={(e) => updateField("name", e.target.value)}
                   placeholder="e.g., DHCP-Server"
+                  className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-[var(--muted)] mb-1">
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={node.quantity || 1}
+                  onChange={(e) => updateField("quantity", Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
                   className="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
