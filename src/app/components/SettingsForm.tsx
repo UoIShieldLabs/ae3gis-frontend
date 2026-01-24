@@ -54,37 +54,8 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
     setResetResult(null);
 
     try {
-      // First, get the project ID from the project name
-      const projectsResponse = await fetch("/api/gns3/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gns3_server_ip: settings.gns3ServerIp,
-          gns3_server_port: settings.gns3ServerPort,
-          username: settings.gns3Username,
-          password: settings.gns3Password,
-        }),
-      });
-
-      if (!projectsResponse.ok) {
-        throw new Error("Failed to fetch projects from GNS3 server");
-      }
-
-      const projects = await projectsResponse.json();
-      const project = projects.find((p: { name: string; project_id: string }) => 
-        p.name.toLowerCase() === projectName.trim().toLowerCase()
-      );
-
-      if (!project) {
-        setResetResult({
-          success: false,
-          message: `Project "${projectName}" not found on GNS3 server`,
-        });
-        return;
-      }
-
-      // Now delete the nodes using the project ID
-      const response = await fetch(`/api/scenarios/projects/${project.project_id}/nodes`, {
+      // Use the new by-name endpoint - backend handles project lookup
+      const response = await fetch(`/api/scenarios/projects/by-name/${encodeURIComponent(projectName.trim())}/nodes`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -105,7 +76,7 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
       } else {
         setResetResult({
           success: false,
-          message: data.error || "Failed to reset project",
+          message: data.detail || data.error || "Failed to reset project",
         });
       }
     } catch (error) {
