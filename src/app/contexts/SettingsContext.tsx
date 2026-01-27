@@ -10,6 +10,8 @@ export interface Settings {
   defaultProjectName: string;
   defaultScriptPath: string;
   priorityDelay: number;
+  // Student identification
+  studentName: string;
   // Track if user has configured required settings
   isConfigured: boolean;
 }
@@ -22,6 +24,7 @@ const DEFAULT_SETTINGS: Settings = {
   defaultProjectName: "",
   defaultScriptPath: "/tmp/script.sh",
   priorityDelay: 3.0,
+  studentName: "",
   isConfigured: false,
 };
 
@@ -30,6 +33,7 @@ interface SettingsContextType {
   updateSettings: (updates: Partial<Settings>) => void;
   resetSettings: () => void;
   isSettingsValid: () => boolean;
+  getSanitizedStudentName: () => string;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -87,9 +91,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return settings.gns3ServerIp.trim().length > 0;
   };
 
+  const getSanitizedStudentName = () => {
+    return settings.studentName.toLowerCase().trim().replace(/\s+/g, "_");
+  };
+
   return (
     <SettingsContext.Provider
-      value={{ settings, updateSettings, resetSettings, isSettingsValid }}
+      value={{ settings, updateSettings, resetSettings, isSettingsValid, getSanitizedStudentName }}
     >
       {children}
     </SettingsContext.Provider>
@@ -105,6 +113,7 @@ export function useSettings() {
       updateSettings: () => {},
       resetSettings: () => {},
       isSettingsValid: () => false,
+      getSanitizedStudentName: () => "",
     };
   }
   return context;
