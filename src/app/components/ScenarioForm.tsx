@@ -62,7 +62,7 @@ export default function ScenarioForm({
   const [otNodes, setOtNodes] = useState<ScenarioNode[]>([]);
 
   // Template mapping
-  const [switchTemplateKey, setSwitchTemplateKey] = useState("");
+  const [switchTemplateKey, setSwitchTemplateKey] = useState("Open-vSwitch");
 
   // UI state
   const [saving, setSaving] = useState(false);
