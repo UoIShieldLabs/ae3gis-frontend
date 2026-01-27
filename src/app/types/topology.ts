@@ -230,3 +230,128 @@ export type NodeWithScripts = Node & {
   default_scripts?: DefaultScript[];
 };
 
+// ============================================
+// LOGGING & STUDENT MANAGEMENT TYPES
+// ============================================
+
+// Syslog collector node info
+export type SnitchNodeInfo = {
+  node_id: string;
+  name: string;
+  ip_address: string;
+  port: number;
+  connected_to_switch: string;
+  console_port: number;
+  console_host: string;
+};
+
+// Logging setup request
+export type LoggingSetupRequest = {
+  project_name: string;
+  gns3_server_ip: string;
+  gns3_server_port?: number;
+  username?: string;
+  password?: string;
+  it_switch_name?: string;
+  ot_switch_name?: string;
+  syslog_template_name?: string;
+};
+
+// Logging setup response
+export type LoggingSetupResponse = {
+  student_name: string;
+  display_name: string;
+  project_name: string;
+  snitch_nodes: SnitchNodeInfo[];
+  injected_node_count: number;
+  injected_nodes: string[];
+  skipped_nodes: string[];
+  errors: string[];
+  message: string;
+  reused_existing: boolean;
+};
+
+// Logging status response
+export type LoggingStatusResponse = {
+  student_name: string;
+  display_name: string;
+  is_active: boolean;
+  project_name: string | null;
+  snitch_nodes: SnitchNodeInfo[];
+  injected_nodes: string[];
+  created_at: string | null;
+};
+
+// Log preview response
+export type LogPreviewResponse = {
+  student_name: string;
+  it_logs: string | null;
+  ot_logs: string | null;
+  errors: string[];
+  retrieved_at: string;
+};
+
+// Log submission response
+export type LogSubmissionResponse = {
+  submission_id: string;
+  student_name: string;
+  submitted_at: string;
+  project_name: string;
+  it_log_lines: number;
+  ot_log_lines: number;
+  errors: string[];
+  message: string;
+};
+
+// Teardown response
+export type LoggingTeardownResponse = {
+  student_name: string;
+  removed_nodes: string[];
+  message: string;
+};
+
+// Student info for instructor view
+export type StudentInfo = {
+  name: string;
+  display_name: string;
+  created_at: string;
+  project_name: string;
+  has_active_session: boolean;
+  submission_count: number;
+};
+
+// Submission summary (without full logs)
+export type SubmissionSummary = {
+  id: string;
+  student_name: string;
+  display_name: string;
+  submitted_at: string;
+  project_name: string;
+  it_log_lines: number;
+  ot_log_lines: number;
+};
+
+// Full submission with logs
+export type SubmissionDetail = SubmissionSummary & {
+  it_logs: string;
+  ot_logs: string;
+};
+
+// Students list response
+export type StudentsListResponse = {
+  students: StudentInfo[];
+  total_count: number;
+};
+
+// Submissions list response
+export type SubmissionsListResponse = {
+  submissions: SubmissionSummary[];
+  total_count: number;
+};
+
+// Delete/reset response
+export type DeleteResponse = {
+  deleted_count: number;
+  message: string;
+};
+
