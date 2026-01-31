@@ -29,45 +29,45 @@ export default function LoginPage() {
             AE³GIS
           </h1>
           <p className="text-lg text-[var(--muted)] mb-2">
-            Network Scenario Builder
-          </p>
-          <p className="text-xs text-[var(--muted)]">
             Agile Emulated Educational Environment for Guided Industrial Security Training
           </p>
+          {/* <p className="text-xs text-[var(--muted)]">
+            Network Scenario Builder
+          </p> */}
         </div>
 
         {/* Role Selection Card */}
-        <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-6 shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Select your role</h2>
+        <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-8 shadow-lg">
+          <h2 className="text-xl font-semibold mb-8">Select your role</h2>
 
           {/* Role Tabs */}
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-4 mb-8">
             <button
               onClick={() => setSelectedRole("instructor")}
-              className={`flex-1 flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 p-6 rounded-lg border-2 transition-all ${
                 selectedRole === "instructor"
                   ? "border-[var(--accent)] bg-[var(--accent)]/10"
                   : "border-[var(--border)] hover:border-[var(--muted)]"
               }`}
             >
-              <GraduationCap className="w-5 h-5" />
-              <span className="font-medium">Instructor</span>
+              <GraduationCap className="w-6 h-6" />
+              <span className="font-medium text-lg">Instructor</span>
             </button>
             <button
               onClick={() => setSelectedRole("student")}
-              className={`flex-1 flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 p-6 rounded-lg border-2 transition-all ${
                 selectedRole === "student"
                   ? "border-[var(--accent)] bg-[var(--accent)]/10"
                   : "border-[var(--border)] hover:border-[var(--muted)]"
               }`}
             >
-              <User className="w-5 h-5" />
-              <span className="font-medium">Student</span>
+              <User className="w-6 h-6" />
+              <span className="font-medium text-lg">Student</span>
             </button>
           </div>
 
           {/* Role Description */}
-          <div className="bg-[var(--input-bg)] rounded-lg p-4 mb-6">
+          {/* <div className="bg-[var(--input-bg)] rounded-lg p-4 mb-6">
             {selectedRole === "instructor" ? (
               <div>
                 <h3 className="font-medium mb-2">Instructor Access</h3>
@@ -86,7 +86,7 @@ export default function LoginPage() {
                 </ul>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Continue Button */}
           <button
@@ -99,9 +99,9 @@ export default function LoginPage() {
         </div>
 
         {/* Footer note */}
-        <p className="text-center text-sm text-[var(--muted)] mt-6">
+        {/* <p className="text-center text-sm text-[var(--muted)] mt-6">
           No authentication required (prototype mode)
-        </p>
+        </p> */}
       </div>
     </div>
   );
