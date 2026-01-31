@@ -30,7 +30,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-[var(--muted)] mb-2">
             Script Name <span className="text-red-400">*</span>
           </label>
           <input
@@ -39,11 +39,11 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Start DHCP Server"
             disabled={loading}
-            className="w-full px-3 py-2 bg-[#252535] text-gray-200 border border-[#3a3a4e] rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="w-full px-3 py-2 bg-[var(--input-bg)] text-[var(--foreground)] border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-[var(--muted)] mb-2">
             Description
           </label>
           <input
@@ -52,13 +52,13 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief description..."
             disabled={loading}
-            className="w-full px-3 py-2 bg-[#252535] text-gray-200 border border-[#3a3a4e] rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="w-full px-3 py-2 bg-[var(--input-bg)] text-[var(--foreground)] border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-[var(--muted)] mb-2">
           Script Content <span className="text-red-400">*</span>
         </label>
         <textarea
@@ -67,7 +67,7 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({
           placeholder="Paste your shell commands here..."
           rows={12}
           disabled={loading}
-          className="w-full px-3 py-2 bg-[#1a1a2e] text-gray-200 border border-[#3a3a4e] rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm resize-y disabled:opacity-50"
+          className="w-full px-3 py-2 bg-[var(--input-bg)] text-[var(--foreground)] border border-[var(--border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] font-mono text-sm resize-y disabled:opacity-50"
           style={{ minHeight: "200px" }}
         />
       </div>
@@ -77,14 +77,14 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="px-4 py-2 text-gray-400 hover:text-gray-200 transition-colors disabled:opacity-50"
+          className="px-4 py-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={loading || !name.trim() || !content.trim()}
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center space-x-2 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Save className="w-4 h-4" />
           <span>{loading ? "Saving..." : script ? "Update Script" : "Create Script"}</span>
@@ -106,27 +106,27 @@ const ScriptListCard: React.FC<ScriptListCardProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="flex items-center justify-between p-4 bg-[#333347] rounded-lg border border-[#3a3a4e] hover:border-indigo-500/50 transition-colors">
+    <div className="flex items-center justify-between p-4 bg-[var(--card-bg)] rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-colors">
       <div className="flex items-center space-x-3">
-        <FileCode className="w-5 h-5 text-indigo-400" />
+        <FileCode className="w-5 h-5 text-[var(--accent)]" />
         <div>
-          <h4 className="font-medium text-gray-100">{script.name}</h4>
+          <h4 className="font-medium text-[var(--foreground)]">{script.name}</h4>
           {script.description && (
-            <p className="text-sm text-gray-400">{script.description}</p>
+            <p className="text-sm text-[var(--muted)]">{script.description}</p>
           )}
         </div>
       </div>
       <div className="flex items-center space-x-2">
         <button
           onClick={onEdit}
-          className="p-2 text-gray-400 hover:text-indigo-400 hover:bg-indigo-900/20 rounded transition-colors"
+          className="p-2 text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--input-bg)] rounded transition-colors"
           title="Edit script"
         >
           <Edit2 className="w-4 h-4" />
         </button>
         <button
           onClick={onDelete}
-          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
+          className="p-2 text-[var(--muted)] hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
           title="Delete script"
         >
           <Trash2 className="w-4 h-4" />
@@ -208,11 +208,11 @@ const ScriptLibrary: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#2a2a3e] rounded-lg p-6 border border-[#3a3a4e]">
+    <div className="bg-[var(--card-bg)] rounded-lg p-6 border border-[var(--border)]">
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center space-x-2 text-gray-100 hover:text-indigo-400 transition-colors"
+          className="flex items-center space-x-2 text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
         >
           {isExpanded ? (
             <ChevronUp className="w-5 h-5" />
@@ -227,7 +227,7 @@ const ScriptLibrary: React.FC = () => {
         {isExpanded && !showEditor && (
           <button
             onClick={handleCreateNew}
-            className="flex items-center space-x-2 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-500 transition-colors"
+            className="flex items-center space-x-2 px-3 py-1.5 bg-[var(--accent)] text-white text-sm rounded-md hover:opacity-90 transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>New Script</span>
@@ -238,8 +238,8 @@ const ScriptLibrary: React.FC = () => {
       {isExpanded && (
         <>
           {error && (
-            <div className="mb-4 p-3 bg-red-900/20 border border-red-500/50 rounded-lg">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-red-500 text-sm">{error}</p>
             </div>
           )}
 
@@ -254,17 +254,17 @@ const ScriptLibrary: React.FC = () => {
             <>
               {loading && scripts.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-400">Loading scripts...</p>
+                  <p className="text-[var(--muted)]">Loading scripts...</p>
                 </div>
               ) : scripts.length === 0 ? (
                 <div className="text-center py-8">
-                  <FileCode className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                  <p className="text-gray-400 mb-4">
+                  <FileCode className="w-12 h-12 text-[var(--muted)] mx-auto mb-3" />
+                  <p className="text-[var(--muted)] mb-4">
                     No scripts yet. Create your first script to get started.
                   </p>
                   <button
                     onClick={handleCreateNew}
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-500 transition-colors"
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:opacity-90 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Create Script</span>
