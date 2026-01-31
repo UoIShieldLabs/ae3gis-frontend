@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Loader2,
   AlertCircle,
-  AlertTriangle,
   ChevronDown,
   ChevronUp,
   Calendar,
@@ -33,7 +32,6 @@ export default function InstructorStudentsPage() {
     fetchSubmissions,
     getSubmissionDetail,
     deleteSubmission,
-    resetAll,
     analyzeSubmission,
     clearError,
   } = useStudentManagement();
@@ -44,7 +42,6 @@ export default function InstructorStudentsPage() {
   const [expandedDetail, setExpandedDetail] = useState<SubmissionDetail | null>(null);
   const [activeTab, setActiveTab] = useState<LogTab>("it");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState<"submissions" | "students" | "all" | null>(null);
   
   // AI Analysis state
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResponse | null>(null);
@@ -144,28 +141,6 @@ export default function InstructorStudentsPage() {
     }
   };
 
-  const handleReset = async (target: "submissions" | "students" | "all") => {
-    clearError();
-    setMessage(null);
-    setShowResetConfirm(null);
-
-    const result = await resetAll(target);
-    if (result) {
-      setMessage({ type: "success", text: result.message });
-    }
-  };
-
-  const getResetWarningText = (target: "submissions" | "students" | "all") => {
-    switch (target) {
-      case "submissions":
-        return "This will permanently delete ALL student submissions. This cannot be undone.";
-      case "students":
-        return "This will delete ALL student sessions (but keep submissions). This cannot be undone.";
-      case "all":
-        return "This will delete ALL student sessions AND all submissions. This cannot be undone.";
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -220,35 +195,6 @@ export default function InstructorStudentsPage() {
           <p className={error || message?.type === "error" ? "text-red-500" : "text-green-500"}>
             {error || message?.text}
           </p>
-        </div>
-      )}
-
-      {/* Reset Confirmation Dialog */}
-      {showResetConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-6 max-w-md mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
-              <h2 className="text-xl font-bold">Confirm Reset</h2>
-            </div>
-            <p className="text-[var(--muted)] mb-6">{getResetWarningText(showResetConfirm)}</p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowResetConfirm(null)}
-                className="px-4 py-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg hover:bg-[var(--border)]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleReset(showResetConfirm)}
-                disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-              >
-                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                Yes, Reset
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -357,39 +303,6 @@ export default function InstructorStudentsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
-
-          {/* Reset Section */}
-          {students.length > 0 && (
-            <div className="bg-[var(--card-bg)] border border-red-500/30 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
-                <h3 className="font-semibold text-red-500">Danger Zone</h3>
-              </div>
-              <p className="text-sm text-[var(--muted)] mb-4">
-                These actions are irreversible. Use with caution.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() => setShowResetConfirm("submissions")}
-                  className="px-4 py-2 text-sm border border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10"
-                >
-                  Reset All Submissions
-                </button>
-                <button
-                  onClick={() => setShowResetConfirm("students")}
-                  className="px-4 py-2 text-sm border border-red-500/50 text-red-500 rounded-lg hover:bg-red-500/10"
-                >
-                  Reset All Students
-                </button>
-                <button
-                  onClick={() => setShowResetConfirm("all")}
-                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Reset Everything
-                </button>
-              </div>
             </div>
           )}
         </>

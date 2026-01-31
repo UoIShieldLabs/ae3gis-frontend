@@ -16,6 +16,11 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ success: boolean; message: string } | null>(null);
   const [projectName, setProjectName] = useState("");
+  
+  // Student data reset state
+  const [studentResetLoading, setStudentResetLoading] = useState(false);
+  const [studentResetResult, setStudentResetResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState<"submissions" | "students" | "all" | null>(null);
 
   // Pre-populate project name from settings
   useEffect(() => {
@@ -86,6 +91,50 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
       });
     } finally {
       setResetting(false);
+    }
+  };
+
+  const handleStudentReset = async (target: "submissions" | "students" | "all") => {
+    setStudentResetLoading(true);
+    setStudentResetResult(null);
+    setShowResetConfirm(null);
+
+    try {
+      const response = await fetch(`/api/instructor/reset/${target}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setStudentResetResult({
+          success: true,
+          message: data.message || `Successfully reset ${target}`,
+        });
+      } else {
+        setStudentResetResult({
+          success: false,
+          message: data.detail || data.error || "Failed to reset",
+        });
+      }
+    } catch (error) {
+      setStudentResetResult({
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to connect to server",
+      });
+    } finally {
+      setStudentResetLoading(false);
+    }
+  };
+
+  const getResetWarningText = (target: "submissions" | "students" | "all") => {
+    switch (target) {
+      case "submissions":
+        return "This will permanently delete ALL student submissions. This cannot be undone.";
+      case "students":
+        return "This will delete ALL student sessions (but keep submissions). This cannot be undone.";
+      case "all":
+        return "This will delete ALL student sessions AND all submissions. This cannot be undone.";
     }
   };
 
@@ -241,6 +290,85 @@ export default function SettingsForm({ showResetProject = true }: SettingsFormPr
               {resetResult.message}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Reset Student Data Section */}
+      {showResetProject && (
+        <div className="bg-[var(--card-bg)] border border-[var(--danger)]/30 rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-[var(--danger)]" />
+            Reset Student Data
+          </h3>
+          <p className="text-sm text-[var(--muted)] mb-4">
+            Delete student sessions and/or submissions. These actions are irreversible.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setShowResetConfirm("submissions")}
+              disabled={studentResetLoading}
+              className="px-4 py-2 text-sm border border-[var(--danger)]/50 text-[var(--danger)] rounded-lg hover:bg-[var(--danger)]/10 disabled:opacity-50"
+            >
+              Reset All Submissions
+            </button>
+            <button
+              onClick={() => setShowResetConfirm("students")}
+              disabled={studentResetLoading}
+              className="px-4 py-2 text-sm border border-[var(--danger)]/50 text-[var(--danger)] rounded-lg hover:bg-[var(--danger)]/10 disabled:opacity-50"
+            >
+              Reset All Students
+            </button>
+            <button
+              onClick={() => setShowResetConfirm("all")}
+              disabled={studentResetLoading}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-[var(--danger)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+            >
+              {studentResetLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              Reset Everything
+            </button>
+          </div>
+
+          {studentResetResult && (
+            <div
+              className={`mt-3 p-3 rounded-lg ${
+                studentResetResult.success
+                  ? "bg-[var(--success)]/10 text-[var(--success)]"
+                  : "bg-[var(--danger)]/10 text-[var(--danger)]"
+              }`}
+            >
+              {studentResetResult.message}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reset Confirmation Dialog */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-6 max-w-md mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle className="w-8 h-8 text-[var(--danger)]" />
+              <h2 className="text-xl font-bold">Confirm Reset</h2>
+            </div>
+            <p className="text-[var(--muted)] mb-6">{getResetWarningText(showResetConfirm)}</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowResetConfirm(null)}
+                className="px-4 py-2 bg-[var(--input-bg)] border border-[var(--border)] rounded-lg hover:bg-[var(--border)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleStudentReset(showResetConfirm)}
+                disabled={studentResetLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--danger)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+              >
+                {studentResetLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Yes, Reset
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
