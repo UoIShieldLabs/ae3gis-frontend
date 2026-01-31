@@ -335,6 +335,19 @@ export type SubmissionSummary = {
 export type SubmissionDetail = SubmissionSummary & {
   it_logs: string;
   ot_logs: string;
+  ai_analysis?: string | null;
+  analyzed_at?: string | null;
+  model_used?: string | null;
+};
+
+// AI Analysis response
+export type AIAnalysisResponse = {
+  student_name: string;
+  submission_id?: string;
+  ai_analysis: string;
+  analyzed_at: string;
+  model_used: string;
+  summary?: string;
 };
 
 // Students list response

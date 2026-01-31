@@ -8,6 +8,7 @@ import {
   SubmissionsListResponse,
   SubmissionDetail,
   DeleteResponse,
+  AIAnalysisResponse,
 } from "../types/topology";
 
 export function useStudentManagement() {
@@ -191,6 +192,48 @@ export function useStudentManagement() {
     [fetchStudents, fetchSubmissions]
   );
 
+  const analyzeSubmission = useCallback(
+    async (
+      studentName: string,
+      submissionId?: string,
+      credentials?: { username: string; password: string }
+    ): Promise<AIAnalysisResponse | null> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const queryParams = new URLSearchParams();
+        if (submissionId) queryParams.set("submission_id", submissionId);
+
+        const queryString = queryParams.toString();
+        const url = `/api/instructor/students/${encodeURIComponent(studentName)}/analyze${
+          queryString ? `?${queryString}` : ""
+        }`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(credentials || {}),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || data.detail || "Failed to analyze submission");
+        }
+
+        return data as AIAnalysisResponse;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        setError(message);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   return {
     loading,
     error,
@@ -202,6 +245,7 @@ export function useStudentManagement() {
     getSubmissionDetail,
     deleteSubmission,
     resetAll,
+    analyzeSubmission,
     clearError: () => setError(null),
   };
 }
