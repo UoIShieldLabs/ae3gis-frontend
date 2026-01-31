@@ -179,7 +179,11 @@ export default function ScenarioForm({
   ): ScenarioLink[] => {
     const links: ScenarioLink[] = [];
     // Track adapter usage per node (Open vSwitch uses adapters, not ports)
-    const adapterCounters: Record<string, number> = {};
+    // Initialize IT-Switch and OT-Switch at adapter 1 to skip adapter 0 (management port)
+    const adapterCounters: Record<string, number> = {
+      "IT-Switch": 1,
+      "OT-Switch": 1,
+    };
 
     const getNextAdapter = (nodeName: string) => {
       if (!adapterCounters[nodeName]) {

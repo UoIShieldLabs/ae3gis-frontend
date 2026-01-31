@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   Users,
   Trash2,
@@ -13,11 +14,13 @@ import {
   Calendar,
   ClipboardList,
   CheckCircle,
+  Sparkles,
 } from "lucide-react";
 import { useStudentManagement } from "../../hooks/useStudentManagement";
-import { SubmissionDetail } from "../../types/topology";
+import { SubmissionDetail, AIAnalysisResponse } from "../../types/topology";
 
 type ViewMode = "students" | "submissions";
+type LogTab = "it" | "ot" | "ai";
 
 export default function InstructorStudentsPage() {
   const {
@@ -31,6 +34,7 @@ export default function InstructorStudentsPage() {
     getSubmissionDetail,
     deleteSubmission,
     resetAll,
+    analyzeSubmission,
     clearError,
   } = useStudentManagement();
 
@@ -38,9 +42,14 @@ export default function InstructorStudentsPage() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [expandedDetail, setExpandedDetail] = useState<SubmissionDetail | null>(null);
-  const [activeTab, setActiveTab] = useState<"it" | "ot">("it");
+  const [activeTab, setActiveTab] = useState<LogTab>("it");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState<"submissions" | "students" | "all" | null>(null);
+  
+  // AI Analysis state
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStudents();
@@ -65,12 +74,43 @@ export default function InstructorStudentsPage() {
     if (expandedSubmissionId === submissionId) {
       setExpandedSubmissionId(null);
       setExpandedDetail(null);
+      setAiAnalysis(null);
+      setAiError(null);
     } else {
       setExpandedSubmissionId(submissionId);
+      setAiAnalysis(null);
+      setAiError(null);
+      setActiveTab("it");
       const detail = await getSubmissionDetail(studentName, submissionId);
       if (detail) {
         setExpandedDetail(detail);
+        // If there's existing AI analysis, populate it
+        if (detail.ai_analysis) {
+          setAiAnalysis({
+            student_name: studentName,
+            submission_id: submissionId,
+            ai_analysis: detail.ai_analysis,
+            analyzed_at: detail.analyzed_at || "",
+            model_used: detail.model_used || "unknown",
+          });
+        }
       }
+    }
+  };
+
+  const handleAnalyzeSubmission = async (studentName: string, submissionId: string) => {
+    setAiLoading(true);
+    setAiError(null);
+    
+    const result = await analyzeSubmission(studentName, submissionId);
+    
+    setAiLoading(false);
+    
+    if (result) {
+      setAiAnalysis(result);
+      setActiveTab("ai");
+    } else {
+      setAiError(error || "Failed to analyze submission");
     }
   };
 
@@ -445,21 +485,117 @@ export default function InstructorStudentsPage() {
                         >
                           OT Logs ({submission.ot_log_lines} lines)
                         </button>
+                        <button
+                          onClick={() => setActiveTab("ai")}
+                          className={`flex-1 px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 ${
+                            activeTab === "ai"
+                              ? "bg-[var(--input-bg)] border-b-2 border-[var(--accent)] text-[var(--accent)]"
+                              : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                          }`}
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          AI Analysis
+                          {aiAnalysis && <span className="w-2 h-2 bg-green-500 rounded-full" />}
+                        </button>
                       </div>
 
-                      {/* Log Content */}
+                      {/* Tab Content */}
                       <div className="p-4">
-                        {loading && !expandedDetail ? (
-                          <div className="flex items-center justify-center py-8">
-                            <Loader2 className="w-6 h-6 animate-spin text-[var(--muted)]" />
+                        {activeTab === "ai" ? (
+                          // AI Analysis Content
+                          <div className="space-y-4">
+                            {/* Analyze Button */}
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm text-[var(--muted)]">
+                                {aiAnalysis ? (
+                                  <span>
+                                    Analyzed {new Date(aiAnalysis.analyzed_at).toLocaleString()} • Model: {aiAnalysis.model_used}
+                                  </span>
+                                ) : (
+                                  "No analysis yet"
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleAnalyzeSubmission(submission.student_name, submission.id)}
+                                disabled={aiLoading}
+                                className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                              >
+                                {aiLoading ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Sparkles className="w-4 h-4" />
+                                )}
+                                {aiAnalysis ? "Re-analyze" : "Analyze"}
+                              </button>
+                            </div>
+
+                            {/* AI Error */}
+                            {aiError && (
+                              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-3">
+                                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                                <p className="text-red-500 text-sm">{aiError}</p>
+                              </div>
+                            )}
+
+                            {/* AI Loading State */}
+                            {aiLoading && (
+                              <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)] mb-4" />
+                                <p className="text-[var(--muted)]">Analyzing submission with AI...</p>
+                                <p className="text-xs text-[var(--muted)] mt-1">This may take a moment</p>
+                              </div>
+                            )}
+
+                            {/* AI Analysis Result */}
+                            {aiAnalysis && !aiLoading && (
+                              <div className="prose prose-sm max-w-none dark:prose-invert bg-[var(--input-bg)] p-6 rounded-lg">
+                                <ReactMarkdown
+                                  components={{
+                                    h1: ({ children }) => <h1 className="text-xl font-bold mb-4 text-[var(--foreground)]">{children}</h1>,
+                                    h2: ({ children }) => <h2 className="text-lg font-semibold mt-6 mb-3 text-[var(--foreground)]">{children}</h2>,
+                                    h3: ({ children }) => <h3 className="text-md font-semibold mt-4 mb-2 text-[var(--foreground)]">{children}</h3>,
+                                    p: ({ children }) => <p className="mb-3 text-[var(--foreground)]">{children}</p>,
+                                    ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
+                                    ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
+                                    li: ({ children }) => <li className="text-[var(--foreground)]">{children}</li>,
+                                    strong: ({ children }) => <strong className="font-semibold text-[var(--foreground)]">{children}</strong>,
+                                    code: ({ children }) => <code className="bg-[var(--border)] px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>,
+                                    pre: ({ children }) => <pre className="bg-[var(--card-bg)] p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
+                                    blockquote: ({ children }) => <blockquote className="border-l-4 border-[var(--accent)] pl-4 italic my-4">{children}</blockquote>,
+                                  }}
+                                >
+                                  {aiAnalysis.ai_analysis}
+                                </ReactMarkdown>
+                              </div>
+                            )}
+
+                            {/* Empty State */}
+                            {!aiAnalysis && !aiLoading && !aiError && (
+                              <div className="flex flex-col items-center justify-center py-12 text-center bg-[var(--input-bg)] rounded-lg">
+                                <Sparkles className="w-12 h-12 text-[var(--muted)] mb-4" />
+                                <h3 className="font-semibold mb-2">AI Analysis Available</h3>
+                                <p className="text-sm text-[var(--muted)] max-w-md">
+                                  Click the &quot;Analyze&quot; button to have AI review this submission and provide insights on the student&apos;s work.
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        ) : expandedDetail ? (
-                          <pre className="text-sm font-mono bg-[var(--input-bg)] p-4 rounded-lg overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">
-                            {activeTab === "it"
-                              ? expandedDetail.it_logs || "(No IT logs)"
-                              : expandedDetail.ot_logs || "(No OT logs)"}
-                          </pre>
-                        ) : null}
+                        ) : (
+                          // IT/OT Logs Content
+                          <>
+                            {loading && !expandedDetail ? (
+                              <div className="flex items-center justify-center py-8">
+                                <Loader2 className="w-6 h-6 animate-spin text-[var(--muted)]" />
+                              </div>
+                            ) : expandedDetail ? (
+                              <pre className="text-sm font-mono bg-[var(--input-bg)] p-4 rounded-lg overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">
+                                {activeTab === "it"
+                                  ? expandedDetail.it_logs || "(No IT logs)"
+                                  : expandedDetail.ot_logs || "(No OT logs)"}
+                              </pre>
+                            ) : null}
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
