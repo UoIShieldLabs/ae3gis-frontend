@@ -67,10 +67,10 @@ export type ScriptListItem = {
 };
 
 // ============================================
-// NEW SCENARIO-CENTRIC TYPES
+// TOPOLOGY-CENTRIC TYPES (Network Infrastructure)
 // ============================================
 
-// Embedded script in a scenario node
+// Embedded script in a topology node
 export type EmbeddedScript = {
   name: string;
   content: string;
@@ -83,8 +83,8 @@ export type EmbeddedScript = {
 // Layer type for organizing nodes
 export type LayerType = "IT" | "DMZ" | "OT";
 
-// Node in a scenario definition
-export type ScenarioNode = {
+// Node in a topology definition
+export type TopologyNode = {
   name: string;
   template_key?: string;
   template_id?: string;
@@ -95,11 +95,14 @@ export type ScenarioNode = {
   quantity?: number; // Number of instances to create (expands to name-1, name-2, etc.)
   parent_name?: string; // Parent node name for hierarchy (set when flattening)
   scripts: EmbeddedScript[];
-  children?: ScenarioNode[]; // Recursive child nodes (used in form, flattened for API)
+  children?: TopologyNode[]; // Recursive child nodes (used in form, flattened for API)
 };
 
+// Legacy alias for backwards compatibility
+export type ScenarioNode = TopologyNode;
+
 // Link between nodes using names
-export type ScenarioLink = {
+export type TopologyLink = {
   nodes: {
     name: string;
     adapter_number: number;
@@ -107,21 +110,27 @@ export type ScenarioLink = {
   }[];
 };
 
+// Legacy alias for backwards compatibility
+export type ScenarioLink = TopologyLink;
+
 // Template mapping (key -> template_id)
 export type TemplateMap = Record<string, string>;
 
-// Complete scenario definition
-export type ScenarioDefinition = {
+// Complete topology definition
+export type TopologyDefinition = {
   gns3_server_ip?: string;
   project_name: string;
   project_id?: string;
   templates: TemplateMap;
-  nodes: ScenarioNode[];
-  links: ScenarioLink[];
+  nodes: TopologyNode[];
+  links: TopologyLink[];
 };
 
-// Scenario metadata (list view)
-export type ScenarioListItem = {
+// Legacy alias for backwards compatibility
+export type ScenarioDefinition = TopologyDefinition;
+
+// Topology metadata (list view)
+export type TopologyListItem = {
   id: string;
   name: string;
   description?: string;
@@ -129,32 +138,44 @@ export type ScenarioListItem = {
   updated_at: string;
 };
 
-// Full scenario (detail view)
-export type Scenario = {
+// Legacy alias for backwards compatibility
+export type ScenarioListItem = TopologyListItem;
+
+// Full topology (detail view)
+export type Topology = {
   id: string;
   name: string;
   description?: string;
-  definition: ScenarioDefinition;
+  definition: TopologyDefinition;
   created_at: string;
   updated_at: string;
 };
 
-// Create scenario request
-export type CreateScenarioRequest = {
+// Legacy alias for backwards compatibility
+export type Scenario = Topology;
+
+// Create topology request
+export type CreateTopologyRequest = {
   name: string;
   description?: string;
-  definition: ScenarioDefinition;
+  definition: TopologyDefinition;
 };
 
-// Update scenario request
-export type UpdateScenarioRequest = {
+// Legacy alias for backwards compatibility
+export type CreateScenarioRequest = CreateTopologyRequest;
+
+// Update topology request
+export type UpdateTopologyRequest = {
   name?: string;
   description?: string;
-  definition?: ScenarioDefinition;
+  definition?: TopologyDefinition;
 };
 
-// Deploy scenario request
-export type DeployScenarioRequest = {
+// Legacy alias for backwards compatibility
+export type UpdateScenarioRequest = UpdateTopologyRequest;
+
+// Deploy topology request
+export type DeployTopologyRequest = {
   gns3_server_ip: string;
   gns3_server_port?: number;
   username?: string;
@@ -164,6 +185,9 @@ export type DeployScenarioRequest = {
   run_scripts?: boolean;
   priority_delay?: number;
 };
+
+// Legacy alias for backwards compatibility
+export type DeployScenarioRequest = DeployTopologyRequest;
 
 // Script execution result
 export type ScriptExecutionResult = {
@@ -175,10 +199,10 @@ export type ScriptExecutionResult = {
   error: string | null;
 };
 
-// Deploy scenario response
-export type DeployScenarioResponse = {
-  scenario_id: string;
-  scenario_name: string;
+// Deploy topology response
+export type DeployTopologyResponse = {
+  topology_id: string;
+  topology_name: string;
   project_id: string;
   project_name: string;
   gns3_server_ip: string;
@@ -188,6 +212,9 @@ export type DeployScenarioResponse = {
   success: boolean;
   errors: string[];
 };
+
+// Legacy alias for backwards compatibility
+export type DeployScenarioResponse = DeployTopologyResponse;
 
 // Push script request (for standalone scripts)
 export type PushScriptRequest = {

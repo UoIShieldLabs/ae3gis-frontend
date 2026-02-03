@@ -1,11 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
-// GET /api/scenarios - List all scenarios
-export async function GET() {
+// GET /api/scenarios - List all notebook-style scenarios
+export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${BACKEND_URL}/scenarios/`, {
+    const { searchParams } = new URL(request.url);
+    const tag = searchParams.get("tag");
+    
+    const url = tag 
+      ? `${BACKEND_URL}/scenarios/?tag=${encodeURIComponent(tag)}`
+      : `${BACKEND_URL}/scenarios/`;
+    
+    const response = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -29,7 +36,7 @@ export async function GET() {
   }
 }
 
-// POST /api/scenarios - Create a new scenario
+// POST /api/scenarios - Create a new notebook-style scenario
 export async function POST(request: Request) {
   try {
     const body = await request.json();

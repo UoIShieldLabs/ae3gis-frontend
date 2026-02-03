@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
-// DELETE /api/scenarios/projects/[projectId]/nodes - Delete all nodes in a project
+// DELETE /api/scenarios/projects/[projectId]/nodes - Delete all nodes in a project (maps to /topologies on backend)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ projectId: string }> }
@@ -12,7 +12,7 @@ export async function DELETE(
     const body = await request.json();
 
     const response = await fetch(
-      `${BACKEND_URL}/scenarios/projects/${projectId}/nodes`,
+      `${BACKEND_URL}/topologies/projects/${projectId}/nodes`,
       {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },

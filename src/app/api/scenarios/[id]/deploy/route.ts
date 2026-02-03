@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
-// POST /api/scenarios/[id]/deploy - Deploy a scenario
+// POST /api/scenarios/[id]/deploy - Deploy a scenario's associated topology
+// Note: This deploys the topology referenced by the scenario
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -11,7 +12,8 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/scenarios/${id}/deploy`, {
+    // Scenarios reference topologies, so we deploy via /topologies endpoint
+    const response = await fetch(`${BACKEND_URL}/topologies/${id}/deploy`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

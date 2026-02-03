@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
-// POST /api/scenarios/deploy - Deploy ad-hoc scenario (without storing)
+// POST /api/scenarios/deploy - Deploy ad-hoc topology (without storing)
+// Note: This deploys a topology definition, not a scenario
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/scenarios/deploy`, {
+    const response = await fetch(`${BACKEND_URL}/topologies/deploy`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
-// GET /api/scenarios/[id] - Get a single scenario
+// GET /api/scenarios/[id] - Get a single notebook-style scenario
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -33,7 +33,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/scenarios/[id] - Update a scenario
+// PATCH /api/scenarios/[id] - Update a notebook-style scenario
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -67,7 +67,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/scenarios/[id] - Delete a scenario
+// DELETE /api/scenarios/[id] - Delete a notebook-style scenario
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

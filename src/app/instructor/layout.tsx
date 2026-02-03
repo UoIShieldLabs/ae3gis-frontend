@@ -1,12 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Network, FileCode2, Settings, LogOut, Users } from "lucide-react";
+import { Network, BookOpen, Settings, LogOut, Users } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
 
 const tabs = [
-  { name: "Scenarios", href: "/instructor/scenarios", icon: Network },
-  { name: "Scripts", href: "/instructor/scripts", icon: FileCode2 },
+  { name: "Topologies", href: "/instructor/topologies", icon: Network },
+  { name: "Scenarios", href: "/instructor/scenarios", icon: BookOpen },
   { name: "Students", href: "/instructor/students", icon: Users },
   { name: "Settings", href: "/instructor/settings", icon: Settings },
 ];

@@ -4,7 +4,10 @@ import {
   ScenarioListItem,
   CreateScenarioRequest,
   UpdateScenarioRequest,
-} from "../types/topology";
+  ExecuteScriptRequest,
+  ExecuteScriptResponse,
+  ListProjectNodesResponse,
+} from "../types/scenario";
 
 export function useScenarios() {
   const [scenarios, setScenarios] = useState<ScenarioListItem[]>([]);
@@ -122,6 +125,59 @@ export function useScenarios() {
     }
   }, []);
 
+  // Execute script on nodes (upload with optional execution)
+  const executeScript = useCallback(
+    async (request: ExecuteScriptRequest): Promise<ExecuteScriptResponse | null> => {
+      try {
+        const response = await fetch("/api/scenarios/execute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(request),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to execute script");
+        }
+        return await response.json();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+        return null;
+      }
+    },
+    []
+  );
+
+  // Fetch project nodes (for script target selection)
+  const fetchProjectNodes = useCallback(
+    async (
+      projectName: string,
+      serverIp: string,
+      serverPort: number = 80,
+      username: string = "gns3",
+      password: string = "gns3"
+    ): Promise<ListProjectNodesResponse | null> => {
+      try {
+        const params = new URLSearchParams({
+          server_ip: serverIp,
+          server_port: serverPort.toString(),
+          username,
+          password,
+        });
+        const response = await fetch(
+          `/api/topologies/projects/${encodeURIComponent(projectName)}/nodes?${params}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch project nodes");
+        }
+        return await response.json();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+        return null;
+      }
+    },
+    []
+  );
+
   // Load scenarios on mount
   useEffect(() => {
     fetchScenarios();
@@ -136,5 +192,7 @@ export function useScenarios() {
     createScenario,
     updateScenario,
     deleteScenario,
+    executeScript,
+    fetchProjectNodes,
   };
 }
