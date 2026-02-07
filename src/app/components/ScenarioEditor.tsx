@@ -34,6 +34,7 @@ interface ScenarioEditorProps {
   nodeLoadError?: string | null;
   onSave?: (data: CreateScenarioRequest | UpdateScenarioRequest) => Promise<boolean>;
   onExecuteScript?: (request: ExecuteScriptRequest) => Promise<unknown>;
+  onChange?: (updatedScenario: Scenario) => void; // Callback for local changes
   canSave?: boolean;
 }
 
@@ -46,6 +47,7 @@ export default function ScenarioEditor({
   nodeLoadError,
   onSave,
   onExecuteScript,
+  onChange,
   canSave = true,
 }: ScenarioEditorProps) {
   // Scenario metadata
@@ -73,6 +75,22 @@ export default function ScenarioEditor({
       setSteps(scenario.steps || []);
     }
   }, [scenario]);
+
+  // Notify parent of changes (for student local editing)
+  useEffect(() => {
+    if (onChange && scenario) {
+      const updatedScenario: Scenario = {
+        ...scenario,
+        name,
+        description,
+        default_topology_id: defaultTopologyId,
+        steps,
+      };
+      onChange(updatedScenario);
+    }
+    // Only trigger on actual content changes, not on initial mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, description, defaultTopologyId, steps]);
 
   // Add new step
   const addStep = (type: "markdown" | "script") => {

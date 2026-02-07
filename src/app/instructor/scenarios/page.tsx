@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, ArrowLeft, Layers, Trash2, Edit } from "lucide-react";
+import { Plus, ArrowLeft, Layers, Trash2, Edit, Eye } from "lucide-react";
 import { useScenarios } from "../../hooks/useScenarios";
 import { useTopologies } from "../../hooks/useTopologies";
 import { useSettings } from "../../contexts/SettingsContext";
 import ScenarioEditor from "../../components/ScenarioEditor";
+import ScenarioView from "../../components/ScenarioView";
 import { Scenario, ScenarioListItem, CreateScenarioRequest, UpdateScenarioRequest, ProjectNode, ExecuteScriptRequest } from "../../types/scenario";
 
 type View = "list" | "create" | "edit" | "detail";
@@ -150,58 +151,15 @@ export default function InstructorScenariosPage() {
     setSelectedScenario(null);
   };
 
-  // Detail View (read-only)
+  // Detail View - Using compact ScenarioView
   if (view === "detail" && selectedScenario) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleCancel}
-            className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-grow">
-            <div className="flex items-center gap-2">
-              <Layers className="w-6 h-6 text-[var(--accent)]" />
-              <h1 className="text-2xl font-bold">{selectedScenario.name}</h1>
-            </div>
-            {selectedScenario.description && (
-              <p className="text-[var(--muted)] mt-1">{selectedScenario.description}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setView("edit")}
-              className="flex items-center gap-2 px-4 py-2 text-[var(--accent)] border border-[var(--accent)] rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
-            >
-              <Edit className="w-4 h-4" />
-              Edit
-            </button>
-            <button
-              onClick={() => handleDelete(selectedScenario.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                deleteConfirm === selectedScenario.id
-                  ? "bg-[var(--danger)] text-white"
-                  : "text-[var(--danger)] border border-[var(--danger)] hover:bg-[var(--danger)]/10"
-              }`}
-            >
-              <Trash2 className="w-4 h-4" />
-              {deleteConfirm === selectedScenario.id ? "Confirm" : "Delete"}
-            </button>
-          </div>
-        </div>
-
-        <ScenarioEditor
-          mode="view"
-          scenario={selectedScenario}
-          topologies={topologies}
-          availableNodes={availableNodes}
-          isLoadingNodes={isLoadingNodes}
-          nodeLoadError={nodeLoadError}
-          onExecuteScript={handleExecuteScript}
-        />
-      </div>
+      <ScenarioView
+        scenario={selectedScenario}
+        onBack={handleCancel}
+        onEdit={() => setView("edit")}
+        onExecuteScript={handleExecuteScript}
+      />
     );
   }
 
@@ -268,13 +226,13 @@ export default function InstructorScenariosPage() {
             {scenarios.map((scenario: ScenarioListItem) => (
               <div
                 key={scenario.id}
-                className="bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 hover:border-[var(--accent)] transition-colors"
+                className="group bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 cursor-pointer transition-all hover:border-[var(--accent)] hover:shadow-lg hover:shadow-[var(--accent)]/10 hover:scale-[1.01]"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-grow cursor-pointer" onClick={() => handleView(scenario.id)}>
                     <div className="flex items-center gap-2 mb-1">
                       <Layers className="w-5 h-5 text-[var(--accent)]" />
-                      <h3 className="font-medium">{scenario.name}</h3>
+                      <h3 className="font-medium group-hover:text-[var(--accent)] transition-colors">{scenario.name}</h3>
                     </div>
                     {scenario.description && (
                       <p className="text-sm text-[var(--muted)] mb-2">{scenario.description}</p>
@@ -285,6 +243,16 @@ export default function InstructorScenariosPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleView(scenario.id);
+                      }}
+                      className="p-2 text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--input-bg)] rounded-lg transition-colors"
+                      title="View"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -329,7 +297,7 @@ export default function InstructorScenariosPage() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">
             {view === "edit" ? "Edit Scenario" : "Create Scenario"}
           </h1>
@@ -339,6 +307,15 @@ export default function InstructorScenariosPage() {
               : "Build a scenario with instructions and scripts"}
           </p>
         </div>
+        {view === "edit" && selectedScenario && (
+          <button
+            onClick={() => setView("detail")}
+            className="flex items-center gap-2 px-4 py-2 text-[var(--muted)] border border-[var(--border)] rounded-lg hover:text-[var(--foreground)] hover:border-[var(--foreground)] transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Preview</span>
+          </button>
+        )}
       </div>
 
       <ScenarioEditor
