@@ -77,6 +77,7 @@ export interface ExecuteScriptRequest {
   storage_path?: string;
   shell?: string;
   timeout?: number;
+  run_after_upload?: boolean; // default: true if omitted
 }
 
 // Per-node execution result
